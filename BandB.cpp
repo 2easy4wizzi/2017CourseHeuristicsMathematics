@@ -2,15 +2,11 @@
 
 BandB::BandB()
 {
-    cout;
     mode = getModelChoice();
-    allJobs = getInput();
-    root = initializeRoot();
-//    qDebug() << root->toString();
+    QList<unsigned int> allJobs = getInput();
+    Node* root = initializeRoot(allJobs);
     activeNodes.push_back(root);
     runBnb();
-
-
 }
 
 bool BandB::getModelChoice()
@@ -20,7 +16,7 @@ bool BandB::getModelChoice()
     return true;
 }
 
-QList<unsigned int> BandB::getInput()
+const QList<unsigned int> BandB::getInput()
 {
     QList<unsigned int> input;
     input.push_back(3);
@@ -29,7 +25,7 @@ QList<unsigned int> BandB::getInput()
     return input;
 }
 
-Node *BandB::initializeRoot()
+Node *BandB::initializeRoot(const QList<unsigned int> &allJobs)
 {
     Node* treeHead = new Node(QList<unsigned int>(), allJobs);
     calcLowerBound(treeHead);
@@ -39,20 +35,12 @@ Node *BandB::initializeRoot()
     return treeHead;
 }
 
-Node *BandB::initNewNode(QList<unsigned int> _state, QList<unsigned int> _jobsLeft)
-{
-    Node* sonI = new Node(_state, _jobsLeft);
-    calcLowerBound(sonI);
-    calcUpperBound(sonI);
-    return sonI;
-}
-
-void BandB::calcLowerBound(Node *node)
+void BandB::calcLowerBound(Node *node) const
 {
     node->L = 9;
 }
 
-void BandB::calcUpperBound(Node *node)
+void BandB::calcUpperBound(Node *node) const
 {
     node->U = 19;
 }
@@ -65,7 +53,7 @@ void BandB::runBnb()
         cout << node->toString();
         cout << "current job:" << job << ". active nodes: " <<activeNodes.size();
         for(int i=0; i<node->state.size() +1; ++i){
-            Node* sonI = initNewNode(node->state, node->jobsLeft);
+            Node* sonI =  new Node(node->state, node->jobsLeft);
             if(node->state.size() -1 >= i){
                 sonI->state[i] += job;
             }
@@ -73,6 +61,8 @@ void BandB::runBnb()
                 sonI->state.push_back(job);
             }
             if(!sonI->jobsLeft.isEmpty()){
+                calcLowerBound(sonI);
+                calcUpperBound(sonI);
                 activeNodes.push_back(sonI);
             }
             else{

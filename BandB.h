@@ -10,7 +10,8 @@
 class Node
 {
 public:
-    Node(QList<unsigned int> _state, QList<unsigned int> _jobsLeft){
+    Node(QList<unsigned int> _state, QList<unsigned int> _jobsLeft)
+        :L(0), U(0){
         state = _state;
         jobsLeft = _jobsLeft;
     }
@@ -47,19 +48,15 @@ class BandB
 public:
     BandB();
     bool getModelChoice();
-    QList<unsigned int> getInput();
-    Node* initializeRoot();
-    Node* initNewNode(QList<unsigned int> _state, QList<unsigned int> _jobsLeft);
-    void calcLowerBound(Node* node);
-    void calcUpperBound(Node* node);
+    const QList<unsigned int> getInput();
+    Node* initializeRoot(const QList<unsigned int>& allJobs);
+    void calcLowerBound(Node* node) const;
+    void calcUpperBound(Node* node) const;
     void runBnb();
     Node* getActive();
     unsigned int getJob();
 
-
-    Node * root;
     bool mode;
-    QList<unsigned int> allJobs;
     QList<Node*> activeNodes;
 
 };
