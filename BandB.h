@@ -7,10 +7,10 @@
 //#define cout qDebug()<< __FILE__ << __FUNCTION__ << __LINE__
 #define cout qDebug()
 #define INF 100000000
-#define DEBUGLEVEL 0 //0 for nothing, 1 for minimum, 2 for all
+#define DEBUGLEVEL 1 //0 for nothing, 1 for minimum, 2 for all
 
 
-static double count = 0;
+static unsigned int count = 0;
 
 class Node
 {
@@ -19,6 +19,9 @@ public:
         :L(0), U(0){
 
         count++;
+        if(DEBUGLEVEL ==1 && (count % 10000000 == 0)){
+            cout << count << "nodes so far";
+        }
         machines = _parentsMachines;
         jobsLeft = _jobsLeft;
     }
@@ -81,13 +84,14 @@ public:
     BandB();
     bool getModelChoice();
     const QList<unsigned int> getInput(int inputBatch);
-    Node* initializeRoot(const QList<unsigned int>& allJobs);
+    void initializeRoot(const QList<unsigned int>& allJobs);
     void calcLowerBound(Node* node) const;
     void calcUpperBoundAndCheckBest(Node* node);
     unsigned int calculateGlobalLowerBound(const QList<unsigned int>& allJobs);
     void runBnb();
     Node* getActive();
     unsigned int getJob();
+    QList<unsigned int> shuffleMyQLIST(QList<unsigned int>& input3rand);
 
     bool mode;
     unsigned int bestGlobalLowerBound;
