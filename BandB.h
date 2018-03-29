@@ -11,6 +11,7 @@
 
 
 static unsigned int count = 0;
+static unsigned int countNow = 0;
 
 class Node
 {
@@ -19,12 +20,17 @@ public:
         :L(0), U(0){
 
         count++;
-        if(DEBUGLEVEL ==1 && (count % 10000000 == 0)){
-            cout << count << "nodes so far";
+        countNow++;
+        if(DEBUGLEVEL >=1 && (count % 10000000 == 0)){
+            cout << count << "nodes so far" << "; active" << countNow << "; deleted" << count - countNow;
         }
         machines = _parentsMachines;
         jobsLeft = _jobsLeft;
     }
+    ~Node(){
+        countNow--;
+    }
+
     QString leafToString(){
         QString machineStr("Target function=" + QString::number(U) + " Number of Machines=" + QString::number(machines.size()) + " . Content: ");
         int i(0);
@@ -71,7 +77,6 @@ public:
     unsigned int U;
     QList<unsigned int> jobsLeft;
     QList<QList<unsigned int>> machines;
-//    QList<unsigned int> machines;
     unsigned int getJob(){
         return jobsLeft.takeFirst();
     }
@@ -82,18 +87,19 @@ class BandB
 {
 public:
     BandB();
-    bool getModelChoice();
+//    bool getModelChoice();
     const QList<unsigned int> getInput(int inputBatch);
-    void initializeRoot(const QList<unsigned int>& allJobs);
+    Node *initializeRoot(const QList<unsigned int>& allJobs);
     void calcLowerBound(Node* node) const;
     void calcUpperBoundAndCheckBest(Node* node);
     unsigned int calculateGlobalLowerBound(const QList<unsigned int>& allJobs);
-    void runBnb();
-    Node* getActive();
+//    void runBnb();
+    void runBnbRec(Node* node);
+//    Node* getActive();
     unsigned int getJob();
     QList<unsigned int> shuffleMyQLIST(QList<unsigned int>& input3rand);
 
-    bool mode;
+//    bool mode;
     unsigned int bestGlobalLowerBound;
     QList<Node*> activeNodes;
     QPair<unsigned int, QList<QList<unsigned int>>> bestSolutionFound;
