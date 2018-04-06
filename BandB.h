@@ -3,6 +3,7 @@
 #include <qlist.h>
 #include <QDebug>
 #include <QTime>
+#include <QEvent>
 
 //#define cout qDebug()<< __FILE__ << __FUNCTION__ << __LINE__
 #define cout qDebug()
@@ -86,23 +87,20 @@ public:
 class BandB
 {
 public:
-    BandB();
+    BandB(QList<unsigned int> allJobs);
 //    bool getModelChoice();
-    const QList<unsigned int> getInput(int inputBatch);
     Node *initializeRoot(const QList<unsigned int>& allJobs);
     void calcLowerBound(Node* node) const;
     void calcUpperBoundAndCheckBest(Node* node);
     unsigned int calculateGlobalLowerBound(const QList<unsigned int>& allJobs);
-//    void runBnb();
     void runBnbRec(Node* node);
-//    Node* getActive();
     unsigned int getJob();
-    QList<unsigned int> shuffleMyQLIST(QList<unsigned int>& input3rand);
-
 //    bool mode;
     unsigned int bestGlobalLowerBound;
     QList<Node*> activeNodes;
     QPair<unsigned int, QList<QList<unsigned int>>> bestSolutionFound;
+protected:
+//    bool eventFilter(QObject* obj, QEvent* event);
 
 };
 

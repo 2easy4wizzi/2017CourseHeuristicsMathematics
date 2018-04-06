@@ -1,10 +1,10 @@
 #include "bandb.h"
 
-BandB::BandB()
+BandB::BandB(QList<unsigned int> allJobs)
 {
     QTime timer; timer.start();
 //    mode = getModelChoice();
-    QList<unsigned int> allJobs = getInput(6);
+//    QList<unsigned int> allJobs = getInput(1);
     bestGlobalLowerBound = calculateGlobalLowerBound(allJobs);
     bestSolutionFound.first = INF;
     Node* root = initializeRoot(allJobs);
@@ -24,45 +24,6 @@ BandB::BandB()
 //    return true;
 //}
 
-const QList<unsigned int> BandB::getInput(int inputBatch)
-{
-    QList<unsigned int> inputReturn;
-
-    QList<unsigned int> input1 = (QList<unsigned int>() << 3 << 9 << 7);
-    QList<unsigned int> input2 = (QList<unsigned int>() << 9 << 7 << 2);
-    QList<unsigned int> input3rand = (QList<unsigned int>() << 2 << 9 << 7);
-    QList<unsigned int> input4 = (QList<unsigned int>() << 9 << 7 << 7 << 11 << 2 << 31 << 27 << 35 << 4 << 19);
-    QList<unsigned int> input5 = (QList<unsigned int>() << 10 << 10 << 10 << 10 << 10 << 10 << 10 << 10 << 10 << 30<<10);
-    QList<unsigned int> input6 = (QList<unsigned int>() << 30 << 30 << 10 << 10 << 10 << 10 << 10 << 10 << 10 << 10 << 10 << 10 << 10 << 10 << 10 << 10 << 10 << 10 << 10 << 10);
-
-    QDateTime a;
-
-    switch (inputBatch) {
-    case 1:
-        inputReturn = input1;
-        break;
-    case 2:
-        inputReturn = input2;
-        break;
-    case 3:
-        inputReturn = shuffleMyQLIST(input3rand);
-        break;
-    case 4:
-        inputReturn = input4;
-        break;
-    case 5:
-        inputReturn = input5;
-        break;
-    case 6:
-        inputReturn = input6;
-        break;
-
-    default:
-        break;
-    }
-    if(DEBUGLEVEL >= 1) cout << "input selected:"<<inputReturn;
-    return inputReturn;
-}
 
 Node* BandB::initializeRoot(const QList<unsigned int> &allJobs)
 {
@@ -86,9 +47,6 @@ Node* BandB::initializeRoot(const QList<unsigned int> &allJobs)
             treeHead = NULL;
         }
     }
-//    else{
-////        activeNodes.push_back(treeHead);
-//    }
     return treeHead;
 }
 
@@ -182,61 +140,6 @@ unsigned int BandB::calculateGlobalLowerBound(const QList<unsigned int> &allJobs
     return maximalLowerBound;
 }
 
-//void BandB::runBnb()
-//{
-//    while(!activeNodes.isEmpty()){
-//        Node* parentNode = getActive();
-//        unsigned int job = parentNode->getJob();
-//        if(DEBUGLEVEL == 2) cout << "current active(job=" + QString::number(job) + ")"<<parentNode->toString();
-//        QList<Node*> activeNodesLevel;
-//        for(int i=0; i < qMin(parentNode->machines.size()+1, 10); ++i){
-//            Node* sonI =  new Node(parentNode->machines, parentNode->jobsLeft);
-
-//            if(parentNode->machines.size() -1 >= i){
-//                sonI->machines[i].push_back(job);
-//            }
-//            else{
-//                QList<unsigned int> newMachine;
-//                newMachine.push_back(job);
-//                sonI->machines.push_back(newMachine);
-//            }
-//            calcLowerBound(sonI);
-//            calcUpperBoundAndCheckBest(sonI);
-//            if(DEBUGLEVEL == 2) cout << "   " << "son" + QString::number(i) << sonI->toString();
-
-//            if(!sonI->jobsLeft.isEmpty()){
-//                if(sonI->L >= bestSolutionFound.first){
-//                    if(DEBUGLEVEL == 2){
-//                        QString msg("CUTOFF was made. ");
-//                        msg.append("job on hand: <" + QString::number(job) + ">. ");
-//                        msg.append("lower bound=" + QString::number(sonI->L) + " is bigger than " + "best solution so far=" + QString::number(bestSolutionFound.first) );
-//                        cout << "       " << msg;
-//                    }
-//                    if(sonI){
-//                        delete sonI;
-//                    }
-//                }
-//                else{
-//                    activeNodesLevel.push_front(sonI);
-//                }
-//            }
-//            else{
-//                if(DEBUGLEVEL == 2) cout << "       " << "leaf:" << sonI->leafToString();
-//            }
-//        }
-//        for(Node* node : activeNodesLevel){
-//            activeNodes.push_back(node);
-//            if(activeNodes.size() == 100000){
-//                cout << "100K";
-//            }
-//        }
-//        activeNodesLevel.clear();
-//        if(parentNode){
-//            delete parentNode;
-//        }
-//    }
-//}
-
 void BandB::runBnbRec(Node *parentNode)
 {
     static int iter =1;
@@ -281,14 +184,8 @@ void BandB::runBnbRec(Node *parentNode)
     delete parentNode;
 }
 
-//Node *BandB::getActive()
+//bool BandB::eventFilter(QObject *obj, QEvent *event)
 //{
-//    return activeNodes.takeLast();
+//    cout << event->type();
+//    return QObject::eventFilter(obj, event);
 //}
-
-QList<unsigned int> BandB::shuffleMyQLIST(QList<unsigned int> &input3rand)
-{
-    qsrand(QDateTime::currentDateTime().toTime_t());
-    std::random_shuffle(input3rand.begin(), input3rand.end());
-    return input3rand;
-}
