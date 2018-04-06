@@ -10,6 +10,8 @@
 #define cout qDebug()
 #define INF 100000000
 #define DEBUGLEVEL 0 //0 for nothing, 1 for minimum, 2 for all
+#define K_UPPER 6
+#define K_LOWER 2
 
 
 static uint count = 0;

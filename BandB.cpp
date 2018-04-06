@@ -51,7 +51,10 @@ Node* BandB::initializeRoot(const QList<uint> &allJobs)
     }
     return treeHead;
 }
-
+/*local lower bound - check the current machins states
+ *find the "heaviest" machine
+ *return the max("heaviest" machine, bestGlobalLowerBound) as lower bound
+*/
 void BandB::calcLowerBound(Node *node) const
 {
     uint bestLocalLowerBound = 0;
@@ -61,12 +64,22 @@ void BandB::calcLowerBound(Node *node) const
         for(const uint& job: machine) {
             sumI += job;
         }
-        if(sumI > bestLocalLowerBound)
+        if(sumI > bestLocalLowerBound){
             bestLocalLowerBound = sumI;
+        }
     }
     node->L = qMax(bestGlobalLowerBound, bestLocalLowerBound);
 }
-
+/*upper bound - "alg" for upper bound
+ * if number of machines is smaller than K_UPPER - create new machines while jobLeft isn't empty
+ * else try to locate where the "unbalance" state exists ( machine5.size=2 and all the rest are 1 -> return 6 as index )
+ * foreach job in jobsLeft
+ *  assign to the machine at index++
+ * now see if a best solution yet is found
+ * locate "heaviest" machine
+ * calculate target function (machines.size + "heaviest" machine)
+ * if it's better than bestSolutionFound -> replace with current found
+*/
 void BandB::calcUpperBoundAndCheckBest(Node *node)
 {
     QList<uint> remaning = node->jobsLeft;
@@ -74,8 +87,8 @@ void BandB::calcUpperBoundAndCheckBest(Node *node)
     uint startIndex(0);
 
 
-    if(machines.size() < 10){
-        for(int i=machines.size(); i<10 && !remaning.isEmpty() ; ++i){
+    if(machines.size() < K_UPPER){
+        for(int i=machines.size(); i<K_UPPER && !remaning.isEmpty() ; ++i){
             uint job = remaning.takeLast();
             QList<uint> newMachine;
             newMachine.push_back(job);
@@ -93,7 +106,7 @@ void BandB::calcUpperBoundAndCheckBest(Node *node)
     while(!remaning.isEmpty()){
         uint job = remaning.takeLast();
         machines[startIndex].push_back(job);
-        startIndex = (startIndex+1)%10;
+        startIndex = (startIndex+1)%K_UPPER;
     }
 
     uint maxMachine(0);
@@ -122,6 +135,11 @@ void BandB::calcUpperBoundAndCheckBest(Node *node)
     node->U = currentTargetFunc;
 }
 
+/*global lower bound
+ * for each K_LOWER <= k <= K_UPPER
+ * (k + sumAllJobs/k) -> best lower bound yet
+ * return the best
+*/
 uint BandB::calculateGlobalLowerBound(const QList<uint> &allJobs)
 {
     double sumAllJobs(0);
@@ -132,7 +150,7 @@ uint BandB::calculateGlobalLowerBound(const QList<uint> &allJobs)
 
     //TODO figure out if no need for loop
     double firstGlobalLower(INFINITY);
-    for(int i=2; i<=10; ++i){
+    for(int i=K_LOWER; i<=K_UPPER; ++i){
         double current = i + sumAllJobs/i;
         if(current < firstGlobalLower){
             firstGlobalLower = current;
@@ -146,7 +164,7 @@ void BandB::runBnbRec(Node *parentNode)
 {
     uint job = parentNode->getJob();
     if(DEBUGLEVEL == 2) cout << "current active(job=" + QString::number(job) + ")"<<parentNode->toString();
-    for(int i=0; i < qMin(parentNode->machines.size()+1, 10); ++i){
+    for(int i=0; i < qMin(parentNode->machines.size()+1, K_UPPER); ++i){
         Node* sonI =  new Node(parentNode->machines, parentNode->jobsLeft);
         if(parentNode->machines.size() -1 >= i){
             sonI->machines[i].push_back(job);

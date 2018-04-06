@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     initInputs();
     const QList<uint> input = getInput(4,false);
     QList<uint> myinput = input;
-    for(int i=10; i<=17; ++i){
+    for(int i=11; i<=16; ++i){
         uint extraJob = getRandNumber(10,50);
         myinput << extraJob;
         myinput = shuffleMyQLIST(myinput);
