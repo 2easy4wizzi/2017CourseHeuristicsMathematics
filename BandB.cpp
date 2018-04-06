@@ -1,18 +1,20 @@
 #include "bandb.h"
 
-BandB::BandB(QList<unsigned int> allJobs)
+BandB::BandB(QList<uint> allJobs)
 {
     QTime timer; timer.start();
+    count = 0;
+    countNow = 0;
 //    mode = getModelChoice();
-//    QList<unsigned int> allJobs = getInput(1);
+//    QList<uint> allJobs = getInput(1);
     bestGlobalLowerBound = calculateGlobalLowerBound(allJobs);
     bestSolutionFound.first = INF;
     Node* root = initializeRoot(allJobs);
     if(root != NULL){
         runBnbRec(root);
-        Node* bestSol = new Node(bestSolutionFound.second, QList<unsigned int>());
+        Node* bestSol = new Node(bestSolutionFound.second, QList<uint>());
         bestSol->U = bestSolutionFound.first;
-        if(DEBUGLEVEL >= 1) cout << "BEST FOUND: " << bestSol->leafToString();
+        cout << "BEST FOUND: " << bestSol->leafToString();
         cout << "nodes seen:" << count << ". run time: " << (double(timer.elapsed()) / 1000) << "seconds";
     }
 }
@@ -25,11 +27,11 @@ BandB::BandB(QList<unsigned int> allJobs)
 //}
 
 
-Node* BandB::initializeRoot(const QList<unsigned int> &allJobs)
+Node* BandB::initializeRoot(const QList<uint> &allJobs)
 {
-    Node* treeHead = new Node(QList<QList<unsigned int>>(), allJobs);
-    unsigned int job = treeHead->getJob();
-    QList<unsigned int> firstMachine;
+    Node* treeHead = new Node(QList<QList<uint>>(), allJobs);
+    uint job = treeHead->getJob();
+    QList<uint> firstMachine;
     firstMachine.push_back(job);
     treeHead->machines.push_back(firstMachine);
     calcLowerBound(treeHead);
@@ -52,11 +54,11 @@ Node* BandB::initializeRoot(const QList<unsigned int> &allJobs)
 
 void BandB::calcLowerBound(Node *node) const
 {
-    unsigned int bestLocalLowerBound = 0;
+    uint bestLocalLowerBound = 0;
 
-    for(const QList<unsigned int>& machine: node->machines) {
-        unsigned int sumI = 0;
-        for(const unsigned int& job: machine) {
+    for(const QList<uint>& machine: node->machines) {
+        uint sumI = 0;
+        for(const uint& job: machine) {
             sumI += job;
         }
         if(sumI > bestLocalLowerBound)
@@ -67,15 +69,15 @@ void BandB::calcLowerBound(Node *node) const
 
 void BandB::calcUpperBoundAndCheckBest(Node *node)
 {
-    QList<unsigned int> remaning = node->jobsLeft;
-    QList<QList<unsigned int>> machines = node->machines;
-    unsigned int startIndex(0);
+    QList<uint> remaning = node->jobsLeft;
+    QList<QList<uint>> machines = node->machines;
+    uint startIndex(0);
 
 
     if(machines.size() < 10){
         for(int i=machines.size(); i<10 && !remaning.isEmpty() ; ++i){
-            unsigned int job = remaning.takeLast();
-            QList<unsigned int> newMachine;
+            uint job = remaning.takeLast();
+            QList<uint> newMachine;
             newMachine.push_back(job);
             machines.push_back(newMachine);
         }
@@ -89,27 +91,27 @@ void BandB::calcUpperBoundAndCheckBest(Node *node)
     }
 
     while(!remaning.isEmpty()){
-        unsigned int job = remaning.takeLast();
+        uint job = remaning.takeLast();
         machines[startIndex].push_back(job);
         startIndex = (startIndex+1)%10;
     }
 
-    unsigned int maxMachine(0);
-    for(const QList<unsigned int>& machine : machines){
-        unsigned int sigmaMachine(0);
-        for(const unsigned int& job : machine){
+    uint maxMachine(0);
+    for(const QList<uint>& machine : machines){
+        uint sigmaMachine(0);
+        for(const uint& job : machine){
             sigmaMachine += job;
         }
         if(sigmaMachine > maxMachine){
             maxMachine = sigmaMachine;
         }
     }
-    unsigned int currentTargetFunc = machines.size() + maxMachine;
+    uint currentTargetFunc = machines.size() + maxMachine;
     if(currentTargetFunc < bestSolutionFound.first){//found a new best
         bestSolutionFound.first = currentTargetFunc;
         bestSolutionFound.second = machines;
         if(DEBUGLEVEL >= 1){
-            Node* newBestSol = new Node(machines, QList<unsigned int>()); count--;
+            Node* newBestSol = new Node(machines, QList<uint>()); count--;
             newBestSol->U = currentTargetFunc;
             cout << "       #########bestSolutionFound just got replaced"  << newBestSol->leafToString() << "#########";
             if(newBestSol){
@@ -120,10 +122,10 @@ void BandB::calcUpperBoundAndCheckBest(Node *node)
     node->U = currentTargetFunc;
 }
 
-unsigned int BandB::calculateGlobalLowerBound(const QList<unsigned int> &allJobs)
+uint BandB::calculateGlobalLowerBound(const QList<uint> &allJobs)
 {
     double sumAllJobs(0);
-    for(const unsigned int& job : allJobs){
+    for(const uint& job : allJobs){
         sumAllJobs += job;
     }
 
@@ -142,8 +144,7 @@ unsigned int BandB::calculateGlobalLowerBound(const QList<unsigned int> &allJobs
 
 void BandB::runBnbRec(Node *parentNode)
 {
-    static int iter =1;
-    unsigned int job = parentNode->getJob();
+    uint job = parentNode->getJob();
     if(DEBUGLEVEL == 2) cout << "current active(job=" + QString::number(job) + ")"<<parentNode->toString();
     for(int i=0; i < qMin(parentNode->machines.size()+1, 10); ++i){
         Node* sonI =  new Node(parentNode->machines, parentNode->jobsLeft);
@@ -151,7 +152,7 @@ void BandB::runBnbRec(Node *parentNode)
             sonI->machines[i].push_back(job);
         }
         else{
-            QList<unsigned int> newMachine;
+            QList<uint> newMachine;
             newMachine.push_back(job);
             sonI->machines.push_back(newMachine);
         }
