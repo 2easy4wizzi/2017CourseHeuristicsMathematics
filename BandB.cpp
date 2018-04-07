@@ -2,6 +2,10 @@
 
 BandB::BandB(QList<uint> allJobs)
 {
+    if(allJobs.isEmpty()){
+        cout << "input is empty";
+        return;
+    }
     QTime timer; timer.start();
     count = 0;
     countNow = 0;
@@ -41,7 +45,7 @@ Node* BandB::initializeRoot(const QList<uint> &allJobs)
         if(DEBUGLEVEL == 2){
             QString msg("CUTOFF was made on ROOT. ");
             msg.append("job on hand: <" + QString::number(job) + ">. ");
-            msg.append("lower bound=" + QString::number(treeHead->L) + " is bigger than " + "best solution so far=" + QString::number(bestSolutionFound.first) );
+            msg.append("lower bound=" + QString::number(treeHead->L) + " is bigger or equal than " + "best solution so far=" + QString::number(bestSolutionFound.first) );
             cout << "       " << msg;
         }
         if(treeHead){
