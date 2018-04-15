@@ -1,5 +1,6 @@
 #include "bandb.h"
-
+#include <QtMath>
+#define QT_MAX_UINT 4294967295
 BandB::BandB(QList<uint> allJobs)
 {
     if(allJobs.isEmpty()){
@@ -11,7 +12,7 @@ BandB::BandB(QList<uint> allJobs)
     countNow = 0;
 //    mode = getModelChoice();
 //    QList<uint> allJobs = getInput(1);
-    bestGlobalLowerBound = calculateGlobalLowerBound(allJobs);
+    calculateGlobalLowerBound(allJobs);
     bestSolutionFound.first = INF;
     Node* root = initializeRoot(allJobs);
     if(root != NULL){
@@ -72,7 +73,24 @@ void BandB::calcLowerBound(Node *node) const
             bestLocalLowerBound = sumI;
         }
     }
+    uint bestGlobalLowerBound = getGlobalLowerByMachinesSize(node->machines.size());
     node->L = qMax(bestGlobalLowerBound, bestLocalLowerBound);
+}
+
+uint BandB::getGlobalLowerByMachinesSize(uint machinesSize) const
+{
+//    cout << machinesSize;
+//    cout << "perfectSplit";
+//    for(int i = 0; i< 11; ++i){
+//        cout << i<<perfectSplit[i];
+//    }
+//    cout << "pMax"<<pMax;
+//    cout << "pigeonholePrinciple";
+//    for(int i = 0; i< 11; ++i){
+//        cout << i<<pigeonholePrinciple[i];
+//    }
+//    exit(0);
+    return qMax( qMax(perfectSplit[machinesSize],pMax), pigeonholePrinciple[machinesSize] );
 }
 /*upper bound - "alg" for upper bound
  * if number of machines is smaller than K_UPPER - create new machines while jobLeft isn't empty
@@ -88,55 +106,130 @@ void BandB::calcUpperBoundAndCheckBest(Node *node)
 {
     QList<uint> remaning = node->jobsLeft;
     QList<QList<uint>> machines = node->machines;
-    uint startIndex(0);
+//    remaning = (QList<uint>() << 10<<3 );
+//    QList<uint> machine1 = (QList<uint>() << 10);
+//    QList<uint> machine2 = (QList<uint>() << 1 << 1 << 1 << 1 << 1 << 1 << 1 << 1);
+//    machines.clear();
+//    machines << machine1 << machine2;
 
-
-    if(machines.size() < K_UPPER){
-        for(int i=machines.size(); i<K_UPPER && !remaning.isEmpty() ; ++i){
-            uint job = remaning.takeLast();
-            QList<uint> newMachine;
-            newMachine.push_back(job);
-            machines.push_back(newMachine);
-        }
+    /*pre process*/
+    QList<uint> summedMachines;
+    for(const QList<uint>& m : machines){
+       uint localSum(0);
+       for(uint job : m){
+           localSum+=job;
+       }
+       summedMachines.append(localSum);
     }
-    else{
-        for(int i=1; i<machines.size(); ++i){
-            if( machines[i].size() != machines[i-1].size()){
-                startIndex = i;
+
+    /**/
+    uint lowestUpperfound(QT_MAX_UINT);
+    QList<QList<uint>> bestMachines;
+
+    for(int k = summedMachines.size(); k <= K_UPPER; k++){
+        QList<uint> localSummedMachines(summedMachines);
+        QList<QList<uint>> localMachines(machines);
+        QList<uint> localRemainng(remaning);
+
+        /*open emtpy machines (k - summedMachines.size())*/
+        for(int r=summedMachines.size(); r<k; ++r){
+            localSummedMachines.append(0);
+            localMachines.append(QList<uint>());
+        }
+
+        int startSize (localRemainng.size());
+        for (int i = 0; i < startSize; ++i) {
+            uint job (localRemainng.takeFirst());
+            uint ind2(0);
+            uint localPotentialTarget(QT_MAX_UINT);
+            for (int j = 0; j < localSummedMachines.size(); ++j) {
+
+                //find heaviest
+                uint heaviestMachine(0);
+                for(int u = 0; u<localSummedMachines.size(); ++u){
+                    uint localSummedMachinesValue = (j==u) ? localSummedMachines[u] + job : localSummedMachines[u];
+                    if(localSummedMachinesValue > heaviestMachine){
+                        heaviestMachine = localSummedMachinesValue;
+                    }
+                }
+                uint potentialTarget(localSummedMachines.size() + heaviestMachine);
+                if(potentialTarget < localPotentialTarget){
+                    localPotentialTarget = potentialTarget;
+                    ind2 = j;
+                }
+            }
+//            cout << minSum << minMachineIndex;
+            /*Add next to job to minimal machine*/
+            localMachines[ind2].append(job);
+            localSummedMachines[ind2] += job;
+//            cout << localMachines << localSummedMachines <<  localRemainng.size();
+        }
+        uint maxSum(0);
+        for(uint summedMachine: localSummedMachines) {
+            if(summedMachine > maxSum) {
+                maxSum = summedMachine;
             }
         }
-    }
+        uint ithTargetFunc(maxSum + localSummedMachines.size());
+//        cout << "\n";
+//        cout << "ithTargetFunction: " << ithTargetFunc;
+//        cout << "Machines: " << localMachines;
+//        cout << "Summed Machines: " << localSummedMachines;
+//        cout << "Size: " << localSummedMachines.size();
 
-    while(!remaning.isEmpty()){
-        uint job = remaning.takeLast();
-        machines[startIndex].push_back(job);
-        startIndex = (startIndex+1)%K_UPPER;
-    }
-
-    uint maxMachine(0);
-    for(const QList<uint>& machine : machines){
-        uint sigmaMachine(0);
-        for(const uint& job : machine){
-            sigmaMachine += job;
-        }
-        if(sigmaMachine > maxMachine){
-            maxMachine = sigmaMachine;
+        if(ithTargetFunc < lowestUpperfound) {
+            lowestUpperfound = ithTargetFunc;
+            bestMachines = localMachines;
         }
     }
-    uint currentTargetFunc = machines.size() + maxMachine;
-    if(currentTargetFunc < bestSolutionFound.first){//found a new best
-        bestSolutionFound.first = currentTargetFunc;
-        bestSolutionFound.second = machines;
+//    cout << bestMachines << lowestUpperfound;
+
+//    if(machines.size() < K_UPPER){
+//        for(int i=machines.size(); i<K_UPPER && !remaning.isEmpty() ; ++i){
+//            uint job = remaning.takeLast();
+//            QList<uint> newMachine;
+//            newMachine.push_back(job);
+//            machines.push_back(newMachine);
+//        }
+//    }
+//    else{
+//        for(int i=1; i<machines.size(); ++i){
+//            if( machines[i].size() != machines[i-1].size()){
+//                startIndex = i;
+//            }
+//        }
+//    }
+
+//    while(!remaning.isEmpty()){
+//        uint job = remaning.takeLast();
+//        machines[startIndex].push_back(job);
+//        startIndex = (startIndex+1)%K_UPPER;
+//    }
+/*see if best solution so far need to be replaced by this one*/
+//    uint maxMachine(0);
+//    for(const QList<uint>& machine : machines){
+//        uint sigmaMachine(0);
+//        for(const uint& job : machine){
+//            sigmaMachine += job;
+//        }
+//        if(sigmaMachine > maxMachine){
+//            maxMachine = sigmaMachine;
+//        }
+//    }
+//    uint currentTargetFunc = machines.size() + maxMachine;
+    if(lowestUpperfound < bestSolutionFound.first){//found a new best
+        bestSolutionFound.first = lowestUpperfound;
+        bestSolutionFound.second = bestMachines;
         if(DEBUGLEVEL >= 1){
-            Node* newBestSol = new Node(machines, QList<uint>()); count--;
-            newBestSol->U = currentTargetFunc;
+            Node* newBestSol = new Node(bestMachines, QList<uint>()); count--;
+            newBestSol->U = lowestUpperfound;
             cout << "       #########bestSolutionFound just got replaced"  << newBestSol->leafToString() << "#########";
             if(newBestSol){
                 delete newBestSol;
             }
         }
     }
-    node->U = currentTargetFunc;
+    node->U = lowestUpperfound;
 }
 
 /*global lower bound
@@ -144,24 +237,38 @@ void BandB::calcUpperBoundAndCheckBest(Node *node)
  * (k + sumAllJobs/k) -> best lower bound yet
  * return the best
 */
-uint BandB::calculateGlobalLowerBound(const QList<uint> &allJobs)
+void BandB::calculateGlobalLowerBound(const QList<uint> &allJobs)
 {
     double sumAllJobs(0);
     for(const uint& job : allJobs){
-        sumAllJobs += job;
+        sumAllJobs += job;//using in global 1
     }
 
+    //global lower 1 - calculation
+    perfectSplit[0] = 0;
+    perfectSplit[K_UPPER+1] = QT_MAX_UINT;
+    for (int i = K_UPPER; i >= 1; --i) {
+        perfectSplit[i] = qMin(perfectSplit[i+1], uint(qCeil(double(i) + double(sumAllJobs) / double(i))));
+    }
 
-    //TODO figure out if no need for loop
-    double firstGlobalLower(INFINITY);
-    for(int i=K_LOWER; i<=K_UPPER; ++i){
-        double current = i + sumAllJobs/i;
-        if(current < firstGlobalLower){
-            firstGlobalLower = current;
+    //global lower 2 - add at least 1 machine
+    //Jobs are sorted
+    pMax = allJobs.first() + 1;
+//    cout << allJobs.first()<< allJobs.first()+1 << pMax;
+
+    //global lower 3 - calculation
+    //Jobs are sorted
+    pigeonholePrinciple[0] = 0;
+    pigeonholePrinciple[K_UPPER+1] = QT_MAX_UINT;
+    for (int i = K_UPPER; i > 0; --i) {
+        uint w = qCeil(double(allJobs.size()) / double(i));
+        uint globalLower3(0);
+        for (uint j = 0; j < w; ++j) {
+            globalLower3 += allJobs[allJobs.size() - j - 1];
         }
+        pigeonholePrinciple[i] = qMin(globalLower3 + i, pigeonholePrinciple[i+1]);
     }
-    double maximalLowerBound = qRound(firstGlobalLower);//    qMax()
-    return maximalLowerBound;
+    return;
 }
 
 void BandB::runBnbRec(Node *parentNode, uint depth)

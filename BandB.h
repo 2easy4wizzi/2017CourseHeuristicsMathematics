@@ -7,9 +7,9 @@
 #include <QWidget>
 
 //#define cout qDebug()<< __FILE__ << __FUNCTION__ << __LINE__
-#define cout qDebug()
+#define cout qDebug() << __LINE__
 #define INF 100000000
-#define DEBUGLEVEL 0 //0 for nothing, 1 for minimum, 2 for all
+#define DEBUGLEVEL 1 //0 for nothing, 1 for minimum, 2 for all
 #define K_UPPER 10
 #define K_LOWER 2
 
@@ -25,7 +25,7 @@ public:
 
         count++;
         countNow++;
-        if(DEBUGLEVEL >=1 && (count % 10000000 == 0)){
+        if(DEBUGLEVEL >=1 && (count % 1000000 == 0)){
             cout << count << "nodes so far" << "; active" << countNow << "; deleted" << count - countNow;
         }
         machines = _parentsMachines;
@@ -96,12 +96,15 @@ public:
 //    bool getModelChoice();
     Node *initializeRoot(const QList<uint>& allJobs);
     void calcLowerBound(Node* node) const;
+    uint getGlobalLowerByMachinesSize(uint machinesSize) const;
     void calcUpperBoundAndCheckBest(Node* node);
-    uint calculateGlobalLowerBound(const QList<uint>& allJobs);
+    void calculateGlobalLowerBound(const QList<uint>& allJobs);
     void runBnbRec(Node* node, uint depth);
     uint getJob();
 //    bool mode;
-    uint bestGlobalLowerBound;
+    uint perfectSplit[K_UPPER+1];//global lower 1
+    uint pMax;//global lower 2
+    uint pigeonholePrinciple[K_UPPER];//global lower 3
     QList<Node*> activeNodes;
     QPair<uint, QList<QList<uint>>> bestSolutionFound;
 //protected:
