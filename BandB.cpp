@@ -15,7 +15,7 @@ BandB::BandB(QList<uint> allJobs)
     bestSolutionFound.first = INF;
     Node* root = initializeRoot(allJobs);
     if(root != NULL){
-        runBnbRec(root);
+        runBnbRec(root, 0);
         Node* bestSol = new Node(bestSolutionFound.second, QList<uint>());
         bestSol->U = bestSolutionFound.first;
         cout << "BEST FOUND: " << bestSol->leafToString();
@@ -64,7 +64,7 @@ void BandB::calcLowerBound(Node *node) const
     uint bestLocalLowerBound = 0;
 
     for(const QList<uint>& machine: node->machines) {
-        uint sumI = 0;
+        uint sumI = node->machines.size();
         for(const uint& job: machine) {
             sumI += job;
         }
@@ -164,10 +164,13 @@ uint BandB::calculateGlobalLowerBound(const QList<uint> &allJobs)
     return maximalLowerBound;
 }
 
-void BandB::runBnbRec(Node *parentNode)
+void BandB::runBnbRec(Node *parentNode, uint depth)
 {
     uint job = parentNode->getJob();
-    if(DEBUGLEVEL == 2) cout << "\n"<<"current active(job=" + QString::number(job) + ")"<<parentNode->toString();
+    if(DEBUGLEVEL == 2) {
+        QString spaces(""); for(uint i=0; i<depth ; ++i){ spaces.append("  "); }
+        cout << qPrintable("\n" + spaces + "*New Sub Tree Parent- depth=" + QString::number(depth)) <<parentNode->toString() <<QString("current active(job=%1)").arg(job) ;
+    }
     for(int i=0; i < qMin(parentNode->machines.size()+1, K_UPPER); ++i){
         Node* sonI =  new Node(parentNode->machines, parentNode->jobsLeft);
         if(parentNode->machines.size() -1 >= i){
@@ -180,25 +183,33 @@ void BandB::runBnbRec(Node *parentNode)
         }
         calcLowerBound(sonI);
         calcUpperBoundAndCheckBest(sonI);
-        if(DEBUGLEVEL == 2) cout << "   " << "son" + QString::number(i) << sonI->toString();
+        if(DEBUGLEVEL == 2) {
+            QString spaces(""); for(uint i=0; i<depth+1; ++i){ spaces.append("  "); }
+            cout << qPrintable(spaces +  "depth:" + QString::number(depth+1)) << "son" + QString::number(i) << sonI->toString();
+        }
         if(!sonI->jobsLeft.isEmpty()){
             if(sonI->L >= bestSolutionFound.first){
                 if(DEBUGLEVEL == 2){
-                    QString msg("CUTOFF was made. ");
+                    QString spaces(""); for(uint i=0; i<depth+1; ++i){ spaces.append("  "); }
+                    QString msg(spaces + "CUTOFF was made. ");
                     msg.append("job on hand: <" + QString::number(job) + ">. ");
                     msg.append("lower bound=" + QString::number(sonI->L) + " is bigger than " + "best solution so far=" + QString::number(bestSolutionFound.first) );
-                    cout << "       " << msg;
+                    msg.prepend(spaces);
+                    cout << qPrintable(msg);
                 }
                 if(sonI){
                     delete sonI;
                 }
             }
             else{
-                runBnbRec(sonI);
+                runBnbRec(sonI, depth + 1);
             }
         }
         else{
-            if(DEBUGLEVEL == 2) cout << "       " << "leaf:" << sonI->leafToString();
+            if(DEBUGLEVEL == 2){
+                QString spaces(""); for(uint i=0; i<depth+1; ++i){ spaces.append("  "); }
+                cout << qPrintable(spaces +  "leaf:") << sonI->leafToString();
+            }
             if(sonI){
                 delete sonI;
             }

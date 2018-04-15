@@ -9,9 +9,9 @@
 //#define cout qDebug()<< __FILE__ << __FUNCTION__ << __LINE__
 #define cout qDebug()
 #define INF 100000000
-#define DEBUGLEVEL 2 //0 for nothing, 1 for minimum, 2 for all
-#define K_UPPER 3
-#define K_LOWER 3
+#define DEBUGLEVEL 0 //0 for nothing, 1 for minimum, 2 for all
+#define K_UPPER 10
+#define K_LOWER 2
 
 
 static uint count = 0;
@@ -98,7 +98,7 @@ public:
     void calcLowerBound(Node* node) const;
     void calcUpperBoundAndCheckBest(Node* node);
     uint calculateGlobalLowerBound(const QList<uint>& allJobs);
-    void runBnbRec(Node* node);
+    void runBnbRec(Node* node, uint depth);
     uint getJob();
 //    bool mode;
     uint bestGlobalLowerBound;
