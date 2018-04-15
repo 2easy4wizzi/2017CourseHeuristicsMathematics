@@ -17,9 +17,8 @@ int main(int argc, char *argv[])
     Q_UNUSED(argv);
 
     initInputs();
-    new BandBK2To10(getInput(16,false,1));
-    new BandBK2To10(getInput(15,false,1));
-//    new LocalK2To10(getInput(3,false,1));
+//    new BandBK2To10(getInput(15,false,1));
+    new LocalK2To10(getInput(3,false,1));
 
     return 0;
 }
@@ -63,7 +62,6 @@ const QList<uint> getInput(int inputBatch, bool shouldShuffle, int sortOrder)
     double sumAll(0);
     for(const uint& job :inputReturn) sumAll+= job;
     cout << "input selected:"<<inputReturn << "size" << inputReturn.size() << "sum" << sumAll;
-    exit(0);
     return inputReturn;
 }
 
