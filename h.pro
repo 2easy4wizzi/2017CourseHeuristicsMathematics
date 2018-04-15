@@ -13,9 +13,11 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp \
-    BandBK2To10.cpp
+    BandBK2To10.cpp \
+    LocalK2To10.cpp
 
 HEADERS  += \
-    BandBK2To10.h
+    BandBK2To10.h \
+    LocalK2To10.h
 
 FORMS    +=

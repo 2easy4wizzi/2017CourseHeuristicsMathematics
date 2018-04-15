@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "BandBK2To10.h"
+#include "LocalK2To10.h"
 
 static QMap<uint, QList<uint>> inputsMap;
 void initInputs();
@@ -17,7 +18,8 @@ int main(int argc, char *argv[])
 
     initInputs();
     new BandBK2To10(getInput(16,false,1));
-//    new BandB(getInput(16,false,1));
+    new BandBK2To10(getInput(15,false,1));
+//    new LocalK2To10(getInput(3,false,1));
 
     return 0;
 }
@@ -39,6 +41,9 @@ void initInputs(){
     inputsMap[14] =(QList<uint>() << 9 << 7 << 7 << 11 << 2 << 31 << 27 << 35 << 4 << 19 << 23 << 29 << 17 << 32 << 33 << 25 << 32 << 48);
     inputsMap[15] = (QList<uint>() << 9 << 7 << 7 << 11 << 2 << 31 << 27 << 35 << 4 << 19 << 23 << 17<< 21<< 22<< 29 << 17 << 32 << 33 << 25 << 32 << 48 << 22 <<11 <<34 << 9 <<1 <<22 <<11 <<34);
     inputsMap[16] = (QList<uint>() << 9 << 7 << 7 << 11 << 2<<23<<15 << 31  << 35 << 4 << 19 << 23 << 17<< 21<< 22<< 29 << 17 << 32 << 33 << 25 << 32 << 48 << 22 <<11 <<34 << 9 <<1 <<22 <<11 <<34);
+    inputsMap[17] = (QList<uint>() << 290 << 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10);
+    inputsMap[18] = (QList<uint>() << 37 << 20<< 42<< 25<< 33<< 8<< 18<< 32<< 22<< 39<< 2 << 30<< 18<< 44<< 25<< 7 << 31<< 19<< 10<< 12<< 5 << 9<< 48<< 10<< 17<< 6<< 1<< 37<< 47<< 42);
+    inputsMap[19] = (QList<uint>() << 290<< 310<< 110<< 150<< 270<< 140<< 425<< 525<< 600<< 415<< 320<< 90<< 90<< 90<< 330<< 10<< 325<< 80<< 210<< 310<< 170<< 50<< 190<< 730<< 490<< 510<< 190<< 335<< 620<< 120);
 }
 
 const QList<uint> getInput(int inputBatch, bool shouldShuffle, int sortOrder)
@@ -55,7 +60,10 @@ const QList<uint> getInput(int inputBatch, bool shouldShuffle, int sortOrder)
     else if(sortOrder == 1){
         std::sort(inputReturn.rbegin(), inputReturn.rend());
     }
-    cout << "input selected:"<<inputReturn << "size" << inputReturn.size();
+    double sumAll(0);
+    for(const uint& job :inputReturn) sumAll+= job;
+    cout << "input selected:"<<inputReturn << "size" << inputReturn.size() << "sum" << sumAll;
+    exit(0);
     return inputReturn;
 }
 
