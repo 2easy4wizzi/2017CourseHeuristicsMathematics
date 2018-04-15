@@ -3,36 +3,34 @@
 #include <qlist.h>
 #include <QDebug>
 #include <QTime>
-#include <QEvent>
+#include <QtMath>
 #include <QWidget>
 
-//#define cout qDebug()<< __FILE__ << __FUNCTION__ << __LINE__
-#define cout qDebug() << __LINE__
-#define INF 100000000
+#define cout qDebug()
+#define INF 10000000000
+#define QT_MAX_UINT 2000000000
 #define DEBUGLEVEL 1 //0 for nothing, 1 for minimum, 2 for all
 #define K_UPPER 10
-#define K_LOWER 2
+//#define K_LOWER 2
 
-
-static uint count = 0;
-static uint countNow = 0;
+//used to track memory leaks
+static uint nodesSeenSoFar = 0;
+static uint nodesActive = 0;
 
 class Node
 {
 public:
-    Node(QList<QList<uint>> _parentsMachines, QList<uint> _jobsLeft)
-        :L(0), U(0){
-
-        count++;
-        countNow++;
-        if(DEBUGLEVEL >=1 && (count % 1000000 == 0)){
-            cout << count << "nodes so far" << "; active" << countNow << "; deleted" << count - countNow;
+    Node(QList<QList<uint>> _parentsMachines, QList<uint> _jobsLeft):L(0), U(0){
+        nodesSeenSoFar++;
+        nodesActive++;
+        if(DEBUGLEVEL >=1 && (nodesSeenSoFar % 1000000 == 0)){
+            cout << nodesSeenSoFar << "nodes so far" << "; active" << nodesActive << "; deleted" << nodesSeenSoFar - nodesActive;
         }
         machines = _parentsMachines;
         jobsLeft = _jobsLeft;
     }
     ~Node(){
-        countNow--;
+        nodesActive--;
     }
 
     QString leafToString(){
@@ -87,13 +85,10 @@ public:
 };
 
 
-class BandB //: public QWidget
+class BandB
 {
-
-//    Q_OBJECT
 public:
     BandB(QList<uint> allJobs);
-//    bool getModelChoice();
     Node *initializeRoot(const QList<uint>& allJobs);
     void calcLowerBound(Node* node) const;
     uint getGlobalLowerByMachinesSize(uint machinesSize) const;
@@ -101,15 +96,11 @@ public:
     void calculateGlobalLowerBound(const QList<uint>& allJobs);
     void runBnbRec(Node* node, uint depth);
     uint getJob();
-//    bool mode;
     uint perfectSplit[K_UPPER+1];//global lower 1
     uint pMax;//global lower 2
     uint pigeonholePrinciple[K_UPPER];//global lower 3
     QList<Node*> activeNodes;
     QPair<uint, QList<QList<uint>>> bestSolutionFound;
-//protected:
-//    bool eventFilter(QObject* obj, QEvent* event);
-
 };
 
 #endif // BANDB_H

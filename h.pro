@@ -13,10 +13,9 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
     BandB.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS  += \
     BandB.h
 
-FORMS    += mainwindow.ui
+FORMS    +=
