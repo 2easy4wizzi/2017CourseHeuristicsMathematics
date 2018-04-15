@@ -1,6 +1,6 @@
-#include "bandb.h"
+#include "BandBK2To10.h"
 
-BandB::BandB(QList<uint> allJobs)
+BandBK2To10::BandBK2To10(QList<uint> allJobs)
 {
     if(allJobs.isEmpty()){ cout << "input is empty"; return; }
     QTime timer; timer.start();//time
@@ -17,7 +17,7 @@ BandB::BandB(QList<uint> allJobs)
     }
 }
 
-Node* BandB::initializeRoot(const QList<uint> &allJobs)
+Node* BandBK2To10::initializeRoot(const QList<uint> &allJobs)
 {
     Node* treeHead = new Node(QList<QList<uint>>(), allJobs);
     uint job = treeHead->getJob();
@@ -28,7 +28,7 @@ Node* BandB::initializeRoot(const QList<uint> &allJobs)
     calcUpperBoundAndCheckBest(treeHead);
 
     if(treeHead->L >= bestSolutionFound.first){
-        if(DEBUGLEVEL == 2){
+        if(DEBUGLEVEL == 1){
             QString msg("CUTOFF was made on ROOT. ");
             msg.append("job on hand: <" + QString::number(job) + ">. ");
             msg.append("lower bound=" + QString::number(treeHead->L) + " is bigger or equal than " + "best solution so far=" + QString::number(bestSolutionFound.first) );
@@ -47,7 +47,7 @@ Node* BandB::initializeRoot(const QList<uint> &allJobs)
  *find the "heaviest" machine + machines size
  *return the max("heaviest" machine, bestGlobalLowerBound) as lower bound
 */
-void BandB::calcLowerBound(Node *node) const
+void BandBK2To10::calcLowerBound(Node *node) const
 {
     uint bestLocalLowerBound = 0;
 
@@ -65,7 +65,7 @@ void BandB::calcLowerBound(Node *node) const
 }
 
 //given a nodes current number of machines - return the maximum of 3 global lower bounds
-uint BandB::getGlobalLowerByMachinesSize(uint machinesSize) const{
+uint BandBK2To10::getGlobalLowerByMachinesSize(uint machinesSize) const{
     return qMax( qMax(perfectSplit[machinesSize],pMax), pigeonholePrinciple[machinesSize] );
 }
 
@@ -77,7 +77,7 @@ uint BandB::getGlobalLowerByMachinesSize(uint machinesSize) const{
     if targetLocal < bestSolutionFound
         save the solution and the target function value in a global variable
 */
-void BandB::calcUpperBoundAndCheckBest(Node *node)
+void BandBK2To10::calcUpperBoundAndCheckBest(Node *node)
 {
     QList<uint> remaning = node->jobsLeft;
     QList<QList<uint>> machines = node->machines;
@@ -166,7 +166,7 @@ void BandB::calcUpperBoundAndCheckBest(Node *node)
   2) pMax: the biggest job + 1
   3) pigeonholePrinciple: for each number of machines i do ((number of jobs)/i)+i
 */
-void BandB::calculateGlobalLowerBound(const QList<uint> &allJobs)
+void BandBK2To10::calculateGlobalLowerBound(const QList<uint> &allJobs)
 {
     double sumAllJobs(0);
     for(const uint& job : allJobs){
@@ -201,7 +201,7 @@ void BandB::calculateGlobalLowerBound(const QList<uint> &allJobs)
 }
 
 //the heart of the BNB
-void BandB::runBnbRec(Node *parentNode, uint depth)
+void BandBK2To10::runBnbRec(Node *parentNode, uint depth)
 {
     uint job = parentNode->getJob();
     if(DEBUGLEVEL == 2) {

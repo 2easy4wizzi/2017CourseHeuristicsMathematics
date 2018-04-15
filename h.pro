@@ -12,10 +12,10 @@ TARGET = h
 TEMPLATE = app
 
 
-SOURCES += main.cpp\
-    BandB.cpp
+SOURCES += main.cpp \
+    BandBK2To10.cpp
 
 HEADERS  += \
-    BandB.h
+    BandBK2To10.h
 
 FORMS    +=

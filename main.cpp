@@ -2,7 +2,7 @@
 #include <QApplication>
 #include <algorithm>
 
-#include "BandB.h"
+#include "BandBK2To10.h"
 
 static QMap<uint, QList<uint>> inputsMap;
 void initInputs();
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
     Q_UNUSED(argv);
 
     initInputs();
-    new BandB(getInput(15,false,1));
+    new BandBK2To10(getInput(9,false,1));
 //    new BandB(getInput(16,false,1));
 
     return 0;

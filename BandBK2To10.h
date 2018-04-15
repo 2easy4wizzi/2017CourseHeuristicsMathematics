@@ -1,5 +1,5 @@
-#ifndef BANDB_H
-#define BANDB_H
+#ifndef BANDBK2TO10_H
+#define BANDBK2TO10_H
 #include <qlist.h>
 #include <QDebug>
 #include <QTime>
@@ -85,10 +85,10 @@ public:
 };
 
 
-class BandB
+class BandBK2To10
 {
 public:
-    BandB(QList<uint> allJobs);
+    BandBK2To10(QList<uint> allJobs);
     Node *initializeRoot(const QList<uint>& allJobs);
     void calcLowerBound(Node* node) const;
     uint getGlobalLowerByMachinesSize(uint machinesSize) const;
@@ -100,7 +100,7 @@ public:
     uint pMax;//global lower 2
     uint pigeonholePrinciple[K_UPPER];//global lower 3
     QList<Node*> activeNodes;
-    QPair<uint, QList<QList<uint>>> bestSolutionFound;
+    QPair<double, QList<QList<uint>>> bestSolutionFound;
 };
 
-#endif // BANDB_H
+#endif // BANDBK2TO10_H
