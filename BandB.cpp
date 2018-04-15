@@ -167,7 +167,7 @@ uint BandB::calculateGlobalLowerBound(const QList<uint> &allJobs)
 void BandB::runBnbRec(Node *parentNode)
 {
     uint job = parentNode->getJob();
-    if(DEBUGLEVEL == 2) cout << "current active(job=" + QString::number(job) + ")"<<parentNode->toString();
+    if(DEBUGLEVEL == 2) cout << "\n"<<"current active(job=" + QString::number(job) + ")"<<parentNode->toString();
     for(int i=0; i < qMin(parentNode->machines.size()+1, K_UPPER); ++i){
         Node* sonI =  new Node(parentNode->machines, parentNode->jobsLeft);
         if(parentNode->machines.size() -1 >= i){

@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 //        cout << "Input selected:"<<myinput << ". Size:" << myinput.size() << ". New element:" << extraJob;
 //        new BandB(myinput);
 //    }
-    new BandB(getInput(11,false));
+    new BandB(getInput(12,false));
     return 0;
 }
 //    QApplication a(argc, argv);
@@ -56,6 +56,8 @@ void initInputs(){
     inputsMap[10] = input10Lecture;
     QList<uint> input11Lecture = (QList<uint>() << 2 << 2 << 2 << 2 << 3 << 3 << 3 << 4 << 4 << 5 << 6 );
     inputsMap[11] = input11Lecture;
+    QList<uint> input12Lecture = (QList<uint>() << 6 << 3 << 3 << 2 << 2 << 2);
+    inputsMap[12] = input12Lecture;
 }
 
 const QList<uint> getInput(int inputBatch, bool shouldShuffle)

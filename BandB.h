@@ -9,9 +9,9 @@
 //#define cout qDebug()<< __FILE__ << __FUNCTION__ << __LINE__
 #define cout qDebug()
 #define INF 100000000
-#define DEBUGLEVEL 1 //0 for nothing, 1 for minimum, 2 for all
-#define K_UPPER 6
-#define K_LOWER 2
+#define DEBUGLEVEL 2 //0 for nothing, 1 for minimum, 2 for all
+#define K_UPPER 3
+#define K_LOWER 3
 
 
 static uint count = 0;
