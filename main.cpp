@@ -17,11 +17,10 @@ int main(int argc, char *argv[])
     Q_UNUSED(argv);
 
     initInputs();
-//    new BandBK2To10(getInput(30,false,1));
-//    new BandBK2To10(getInput(152,false,1));
 
+    new BandBK2To10(getInput(30,false,1));
 
-    new LocalK2To10(getInput(152,false,1));
+//    new LocalK2To10(getInput(152,false,1));
     return 0;
 }
 
@@ -127,7 +126,7 @@ void initInputs(){
                      << 1 << 2 << 3 << 4 << 5
                      << 1 << 2 << 3 << 4 << 5
                      );
-    inputsMap[30] = (QList<uint>()<< 100 << 90 << 80 << 70<< 60 << 50 << 40 << 30<< 20 << 10<< 1 << 2 << 3 << 4 << 5<< 1 << 2 << 3 << 4 << 5<< 1 << 2 << 3 << 4 << 5<< 1 << 2 << 3 << 4 << 5 << 5);
+    inputsMap[30] = (QList<uint>()<< 4<<100 << 90 << 80 << 70<< 60 << 50 << 40 << 30<< 20 << 10<< 1 << 2 << 3 << 4 << 5<< 1 << 2 << 3 << 4 << 5<< 1 << 2 << 3 << 4 << 5<< 1 << 2 << 3 << 4 << 5 << 5);
 
 
 }

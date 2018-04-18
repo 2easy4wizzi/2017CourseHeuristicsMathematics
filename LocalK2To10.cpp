@@ -4,7 +4,7 @@ LocalK2To10::LocalK2To10(QList<uint> allJobs)
 {
 //    currentState = bestSolutionFound = initFirstSol(allJobs);//done - continue from here
 
-    QList<uint> first = (QList<uint>() << 5 << 5<< 5);
+    QList<uint> first = (QList<uint>() << 5 << 5 << 5 << 5<< 5);
     QList<uint> second = (QList<uint>() << 50);
     QList<uint> th = (QList<uint>() << 70);
     QList<uint> fo= (QList<uint>() << 30);
@@ -12,7 +12,7 @@ LocalK2To10::LocalK2To10(QList<uint> allJobs)
     currentState.second.clear();
 //    currentState.second << allJobs;
     currentState.second << first;
-    currentState.first = 15;
+    currentState.first = 25;
 
 
     printSol("currentState", currentState);
@@ -115,6 +115,9 @@ QPair<double, QList<QList<uint> > > LocalK2To10::runLocalSearch(QPair<double, QL
     QMap<QString, QPair<double, QList<QList<uint>>>> bestSolutions;
     for(int i=0; i<MAX_ITER; ++i){
         cout << "ITER"<< i;
+        if(i == 2){
+            cout;
+        }
         bestSolutions["MergeMachines"] = mergeMachines(currentState);
         printSol("MergeMachines",bestSolutions["MergeMachines"]);
         bestSolutions["Move1jobs"]     = move1jobs(currentState);
@@ -143,14 +146,17 @@ QPair<double, QList<QList<uint> > > LocalK2To10::runLocalSearch(QPair<double, QL
 QPair<double, QList<QList<uint> > > LocalK2To10::move1jobs(const QPair<double, QList<QList<uint> > > currentState)
 {
     QList<QList<uint>> machines = currentState.second;
-    QList<QList<uint>> machinesCopy;
     QPair<double, QList<QList<uint> > > bestNeighborState(currentState);
     int machinesNumber = currentState.second.size();
 
     for(int i = 0; i < machinesNumber; ++i) {
+        QList<uint> sawThisJobs;
         for(int j = 0; j < machines[i].size(); ++j) {
             QList<uint> currentMachine = machines[i];
             uint jobOnHand = currentMachine.takeAt(j);
+            if(sawThisJobs.contains(jobOnHand)) continue;//no need to move job with same value from the same machine
+            sawThisJobs.append(jobOnHand);
+            QList<QList<uint>> machinesCopy;
             for(int k=0; k<machines.size(); ++k){
                 if(!machines[k].isEmpty() && k != i){
                     machinesCopy << machines[k];
@@ -174,7 +180,9 @@ QPair<double, QList<QList<uint> > > LocalK2To10::move1jobs(const QPair<double, Q
                     }
                     machinesCopy.pop_back();
                 }
-                else{
+                else if(newMachinesNumber != machines.size() || (newMachinesNumber != machines.size() && i!=l)){
+                    //if newSize == oldSize => we don't want to put the job on the same machine it came from.
+                    //so if they are equal => do 'if' only if i!=l. if they are not equal, always do the 'if' (the i machine was removed)
                     machinesCopy[l].push_back(jobOnHand);
                     double tf (targetFunction(machinesCopy));
                     QPair<double, QList<QList<uint> > > tempCurrentState;
