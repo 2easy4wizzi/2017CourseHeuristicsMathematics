@@ -101,6 +101,7 @@ public:
     uint pigeonholePrinciple[K_UPPER];//global lower 3
     QList<Node*> activeNodes;
     QPair<double, QList<QList<uint>>> bestSolutionFound;
+    QMap<uint,uint> cutOffHist;
 };
 
 #endif // BANDBK2TO10_H

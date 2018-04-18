@@ -14,6 +14,15 @@ BandBK2To10::BandBK2To10(QList<uint> allJobs)
         bestSol->U = bestSolutionFound.first;
         cout << "BEST FOUND: " << bestSol->leafToString();
         cout << "nodes seen:" << nodesSeenSoFar << ". run time: " << (double(timer.elapsed()) / 1000) << "seconds";
+        cout << "cut off histogram:";
+        uint totalCutOffs(0);
+        for(int i=0; i<allJobs.size(); ++i){
+            if(cutOffHist.contains(i)){
+                cout << qPrintable(QString("   on depth %1 there were %2 cut offs").arg(i).arg(cutOffHist[i]));
+                totalCutOffs += cutOffHist[i];
+            }
+        }
+        cout << qPrintable(QString("**there were %1 cutoffs in total").arg(totalCutOffs));
     }
 }
 
@@ -226,6 +235,8 @@ void BandBK2To10::runBnbRec(Node *parentNode, uint depth)
         }
         if(!sonI->jobsLeft.isEmpty()){
             if(sonI->L >= bestSolutionFound.first){
+
+                cutOffHist.contains(depth+1) ? cutOffHist[depth+1]++ : cutOffHist[depth+1]=1;
                 if(DEBUGLEVEL == 2){
                     QString spaces(""); for(uint i=0; i<depth+1; ++i){ spaces.append("  "); }
                     QString msg(spaces + "CUTOFF was made. ");
