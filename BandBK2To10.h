@@ -6,7 +6,7 @@
 #include <QtMath>
 #include <QWidget>
 
-#define cout qDebug()
+#define cout2 qDebug()
 #define INF 10000000000
 #define QT_MAX_UINT 2000000000
 #define DEBUGLEVEL 1 //0 for nothing, 1 for minimum, 2 for all
@@ -24,7 +24,7 @@ public:
         nodesSeenSoFar++;
         nodesActive++;
         if(DEBUGLEVEL >=1 && (nodesSeenSoFar % 1000000 == 0)){
-            cout << nodesSeenSoFar << "nodes so far" << "; active" << nodesActive << "; deleted" << nodesSeenSoFar - nodesActive;
+            cout2 << nodesSeenSoFar << "nodes so far" << "; active" << nodesActive << "; deleted" << nodesSeenSoFar - nodesActive;
         }
         machines = _parentsMachines;
         jobsLeft = _jobsLeft;

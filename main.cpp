@@ -17,8 +17,11 @@ int main(int argc, char *argv[])
     Q_UNUSED(argv);
 
     initInputs();
-//    new BandBK2To10(getInput(28,false,1));
-    new LocalK2To10(getInput(3,false,1));
+//    new BandBK2To10(getInput(30,false,1));
+//    new BandBK2To10(getInput(152,false,1));
+
+
+    new LocalK2To10(getInput(152,false,1));
     return 0;
 }
 
@@ -38,6 +41,7 @@ void initInputs(){
     inputsMap[13] = (QList<uint>() << 9 << 7 << 7 << 11 << 2 << 31 << 27 << 35 << 4 << 19 << 23 << 29 << 17 << 32 << 33);
     inputsMap[14] =(QList<uint>() << 9 << 7 << 7 << 11 << 2 << 31 << 27 << 35 << 4 << 19 << 23 << 29 << 17 << 32 << 33 << 25 << 32 << 48);
     inputsMap[15] = (QList<uint>() << 9 << 7 << 7 << 11 << 2 << 31 << 27 << 35 << 4 << 19 << 23 << 17<< 21<< 22<< 29 << 17 << 32 << 33 << 25 << 32 << 48 << 22 <<11 <<34 << 9 <<1 <<22 <<11 <<34);
+    inputsMap[152] = (QList<uint>() << 9 << 7 << 7 << 11 << 2 << 31 << 27 << 35 << 4 << 19 << 23 << 17<< 21<<  33 << 25 << 32 << 48 << 22 <<11 <<34 << 9 <<1 <<22 <<11 <<34);
     inputsMap[16] = (QList<uint>() << 9 << 7 << 7 << 11 << 2<<23<<15 << 31  << 35 << 4 << 19 << 23 << 17<< 21<< 22<< 29 << 17 << 32 << 33 << 25 << 32 << 48 << 22 <<11 <<34 << 9 <<1 <<22 <<11 <<34);
     inputsMap[17] = (QList<uint>() << 290 << 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10<< 10);
     inputsMap[18] = (QList<uint>() << 37 << 20<< 42<< 25<< 33<< 8<< 18<< 32<< 22<< 39<< 2 << 30<< 18<< 44<< 25<< 7 << 31<< 19<< 10<< 12<< 5 << 9<< 48<< 10<< 17<< 6<< 1<< 37<< 47<< 42);
@@ -113,6 +117,17 @@ void initInputs(){
                      << 3 << 3 << 3 << 3
                      << 3 << 3 << 3 << 3
                      );
+    inputsMap[29] = (QList<uint>()
+                     << 100 << 90 << 80 << 70
+                     << 60 << 50 << 40 << 30
+                     << 20 << 10
+                     << 1 << 2 << 3 << 4 << 5
+                     << 1 << 2 << 3 << 4 << 5
+                     << 1 << 2 << 3 << 4 << 5
+                     << 1 << 2 << 3 << 4 << 5
+                     << 1 << 2 << 3 << 4 << 5
+                     );
+    inputsMap[30] = (QList<uint>()<< 100 << 90 << 80 << 70<< 60 << 50 << 40 << 30<< 20 << 10<< 1 << 2 << 3 << 4 << 5<< 1 << 2 << 3 << 4 << 5<< 1 << 2 << 3 << 4 << 5<< 1 << 2 << 3 << 4 << 5 << 5);
 
 
 }
@@ -133,7 +148,7 @@ const QList<uint> getInput(int inputBatch, bool shouldShuffle, int sortOrder)
     }
     double sumAll(0);
     for(const uint& job :inputReturn) sumAll+= job;
-    cout << "input selected:"<<inputReturn << "size" << inputReturn.size() << "sum" << sumAll;
+    cout2 << "input selected:"<<inputReturn << "size" << inputReturn.size() << "sum" << sumAll;
     return inputReturn;
 }
 
