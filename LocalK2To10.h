@@ -6,8 +6,8 @@
 #define cout qDebug()
 #define INF 10000000000
 #define QT_MAX_UINT 2000000000
-#define DEBUGLEVEL 1 //0 for nothing, 1 for minimum, 2 for all
-#define K_UPPER 2
+#define DEBUGLEVEL 2 //0 for nothing, 1 for minimum, 2 for all
+#define K_UPPER 10
 #define MAX_ITER 5
 
 class LocalK2To10
@@ -22,15 +22,15 @@ public:
 
     /*Searching Steps*/
     QPair<double, QList<QList<uint>>> doAllSearchSteps(const QPair<double, QList<QList<uint>>> bestGlobalSol);
-    QPair<double, QList<QList<uint>>> move1jobs(const QPair<double, QList<QList<uint>>> bestGlobalSol);
-    QPair<double, QList<QList<uint>>> swap(const QPair<double, QList<QList<uint>>> bestGlobalSol);
-    QPair<double, QList<QList<uint>>> move2jobs(const QPair<double, QList<QList<uint>>> bestGlobalSol);
-    QPair<double, QList<QList<uint>>> swap2jobfor1(const QPair<double, QList<QList<uint>>> bestGlobalSol);
-    QPair<double, QList<QList<uint>>> move3jobs(const QPair<double, QList<QList<uint>>> bestGlobalSol);
-    QPair<double, QList<QList<uint>>> swap2jobfor2(const QPair<double, QList<QList<uint>>> bestGlobalSol);
-    QPair<double, QList<QList<uint>>> cyclicMove(const QPair<double, QList<QList<uint>>> bestGlobalSol);
-    QPair<double, QList<QList<uint>>> swap3jobfor3(const QPair<double, QList<QList<uint>>> bestGlobalSol);
+    QPair<double, QList<QList<uint>>> move1jobsOptimal(const QPair<double, QList<QList<uint>>> bestGlobalSol);
+    QPair<double, QList<QList<uint>>> swap1for1(const QPair<double, QList<QList<uint>>> bestGlobalSol);
+    QPair<double, QList<QList<uint>>> swap2for1(const QPair<double, QList<QList<uint>>> bestGlobalSol);
+    QPair<double, QList<QList<uint>>> swap2for2(const QPair<double, QList<QList<uint>>> bestGlobalSol);
+    QPair<double, QList<QList<uint>>> swap3for3(const QPair<double, QList<QList<uint>>> bestGlobalSol);
 
+    QPair<double, QList<QList<uint>>> move2jobs(const QPair<double, QList<QList<uint>>> bestGlobalSol);
+    QPair<double, QList<QList<uint>>> move3jobs(const QPair<double, QList<QList<uint>>> bestGlobalSol);
+    QPair<double, QList<QList<uint>>> cyclicMove(const QPair<double, QList<QList<uint>>> bestGlobalSol);
 
     /*aux functions*/
     double targetFunction(QList<QList<uint>> machines);
@@ -40,6 +40,7 @@ public:
 
     /*class vars*/
     QPair<double, QList<QList<uint>>> bestGlobalSolution;
+    int numberOfMachines;
 
 };
 
