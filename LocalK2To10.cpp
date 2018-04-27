@@ -2,34 +2,30 @@
 
 LocalK2To10::LocalK2To10(QList<uint> allJobs)
 {
-//    currentState = bestSolutionFound = initFirstSol(allJobs);//done - continue from here
+    Q_UNUSED(allJobs);
+    QList<uint> allJobs1 = (QList<uint>() << 7 << 6 << 5);
+    bestGlobalSolution = initFirstSol(allJobs1);//done - continue from here
+    QList<uint> first = (QList<uint>() << 6 << 7);
+    QList<uint> second = (QList<uint>() << 9 << 8);
+    QList<uint> third = (QList<uint>() << 1);
 
-    QList<uint> first = (QList<uint>() << 5 << 5 << 5 << 5<< 5);
-    QList<uint> second = (QList<uint>() << 50);
-    QList<uint> th = (QList<uint>() << 70);
-    QList<uint> fo= (QList<uint>() << 30);
-    QList<uint> five= (QList<uint>() << 50);
-    currentState.second.clear();
-//    currentState.second << allJobs;
-    currentState.second << first;
-    currentState.first = 25;
+    bestGlobalSolution.second.clear();
+    bestGlobalSolution.second << first;
+    bestGlobalSolution.second << second;
+//    bestGlobalSolution.second << third;
+    bestGlobalSolution.first = 19;
 
 
-    printSol("currentState", currentState);
-    bestSolutionFound = runLocalSearch(currentState);
-    printSol("#####bestSolutionFound", bestSolutionFound);
+    printSol("START -------- bestSolutionFound", bestGlobalSolution);
+    bestGlobalSolution = runLocalSearch(bestGlobalSolution);
+    printSol("END   -------- bestSolutionFound", bestGlobalSolution);
 }
 
 QPair<double, QList<QList<uint> > > LocalK2To10::initFirstSol(QList<uint> allJobs)
 {
-    QPair<double, QList<QList<uint> > > lptFirstSol = runLpt(allJobs);
-    //QPair<double, QList<QList<uint> > > anotherFirstSol = runBla(allJobs);
-
-    //select best first solution
-    QPair<double, QList<QList<uint> > >bestSolutionFound;
-    bestSolutionFound.first = lptFirstSol.first;
-    bestSolutionFound.second = lptFirstSol.second;
-    return bestSolutionFound;
+//    QPair<double, QList<QList<uint> > > lptFirstSol = runLpt(allJobs);
+    QPair<double, QList<QList<uint> > > sameMachineFirstSol = runSameMachine(allJobs);
+    return sameMachineFirstSol;
 }
 
 QPair<double, QList<QList<uint> > > LocalK2To10::runLpt(QList<uint> allJobs)
@@ -93,10 +89,26 @@ QPair<double, QList<QList<uint> > > LocalK2To10::runLpt(QList<uint> allJobs)
     return lptFirstSol;
 }
 
+QPair<double, QList<QList<uint> > > LocalK2To10::runSameMachine(QList<uint> allJobs)
+{
+    QPair<double, QList<QList<uint> > > sol;
+    QList<QList<uint>> machines;
+    QList<uint> firstMachine;
+    double tf(1);
+    for (uint job : allJobs){
+        tf += job;
+        firstMachine << job;
+    }
+    machines << firstMachine;
+    sol.first = tf;
+    sol.second = machines;
+    return sol;
+}
+
 void LocalK2To10::printSol(const QString& name,const QPair<double, QList<QList<uint> > > sol)
 {
-    cout << qPrintable(QString("%1 found:").arg(name));
-    cout << qPrintable(QString("   target function = %1, num of machines=%2").arg(sol.first).arg(sol.second.size()));
+    cout << qPrintable(QString("   %1 found:").arg(name));
+    cout << qPrintable(QString("      target function = %1, num of machines=%2").arg(sol.first).arg(sol.second.size()));
     QString machinesContent;
     for(const QList<uint>& m : sol.second){
         machinesContent += "(";
@@ -107,47 +119,66 @@ void LocalK2To10::printSol(const QString& name,const QPair<double, QList<QList<u
         machinesContent += "), ";
     }
     machinesContent = machinesContent.mid(0,machinesContent.size()-2);
-    cout << qPrintable(QString("   machines content = %1").arg(machinesContent));
+    cout << qPrintable(QString("      machines content = %1").arg(machinesContent));
 }
 
-QPair<double, QList<QList<uint> > > LocalK2To10::runLocalSearch(QPair<double, QList<QList<uint> > > currentState)
+QPair<double, QList<QList<uint> > > LocalK2To10::runLocalSearch(QPair<double, QList<QList<uint> > > bestGlobalSol)
 {
-    QMap<QString, QPair<double, QList<QList<uint>>>> bestSolutions;
-    for(int i=0; i<MAX_ITER; ++i){
-        cout << "ITER"<< i;
-        if(i == 2){
-            cout;
-        }
-        bestSolutions["MergeMachines"] = mergeMachines(currentState);
-        printSol("MergeMachines",bestSolutions["MergeMachines"]);
-        bestSolutions["Move1jobs"]     = move1jobs(currentState);
-        printSol("Move1jobs",bestSolutions["Move1jobs"]);
-        double bestSoFar(currentState.first);
-        QString bestKey;
-        for(QString s : bestSolutions.keys()){
-            if(bestSolutions[s].first <= bestSoFar){
-                bestSoFar = bestSolutions[s].first;
-                bestKey = s;
-            }
-        }
-        QPair<double, QList<QList<uint>>> maybeSol = bestSolutions[bestKey];
-        if(maybeSol == currentState){
-            //handle no improvment
-            cout << "death"; return currentState;
+
+    QPair<double, QList<QList<uint>>> bestLocalSol = bestGlobalSol;
+    uint iterations(0);
+    bool cont(true);
+    while(cont && iterations < 10){
+        cout << "ITER"<< ++iterations;
+        bestLocalSol = doAllSearchSteps(bestLocalSol);
+        if( bestLocalSol != bestGlobalSol){
+            printSol("bestLocalSol",bestLocalSol);
+            bestGlobalSol = bestLocalSol;
         }
         else{
-            currentState = maybeSol;
+            cout << qPrintable(QString("   done with %1 iterations").arg(iterations));
+            cont = false;
         }
 
     }
-    return currentState;
+
+    return bestLocalSol;
 }
 
-QPair<double, QList<QList<uint> > > LocalK2To10::move1jobs(const QPair<double, QList<QList<uint> > > currentState)
+QPair<double, QList<QList<uint> > > LocalK2To10::doAllSearchSteps(const QPair<double, QList<QList<uint> > > bestGlobalSol)
 {
-    QList<QList<uint>> machines = currentState.second;
-    QPair<double, QList<QList<uint> > > bestNeighborState(currentState);
-    int machinesNumber = currentState.second.size();
+    QPair<double, QList<QList<uint>>> bestLocalSol = bestGlobalSol;
+    //step1
+    bestLocalSol = move1jobs(bestLocalSol);
+    if(bestLocalSol != bestGlobalSol){
+        return bestLocalSol;
+    }
+    //step2
+    bestLocalSol = swap(bestLocalSol);
+    if(bestLocalSol != bestGlobalSol){
+        return bestLocalSol;
+    }
+//    //step3
+//    bestLocalSol = move1jobs(bestLocalSol);
+//    if(bestLocalSol != bestGlobalSol){
+//        return bestLocalSol;
+//    }
+//    //step4
+//    bestLocalSol = move1jobs(bestLocalSol);
+//    if(bestLocalSol != bestGlobalSol){
+//        return bestLocalSol;
+//    }
+
+    return bestGlobalSol;
+
+}
+
+QPair<double, QList<QList<uint> > > LocalK2To10::move1jobs(const QPair<double, QList<QList<uint> > > bestGlobalSol)
+{
+    cout << qPrintable(QString(__FUNCTION__));
+    QList<QList<uint>> machines = bestGlobalSol.second;
+    QPair<double, QList<QList<uint> > > bestNeighborState(bestGlobalSol);
+    int machinesNumber = bestGlobalSol.second.size();
 
     for(int i = 0; i < machinesNumber; ++i) {
         QList<uint> sawThisJobs;
@@ -165,29 +196,31 @@ QPair<double, QList<QList<uint> > > LocalK2To10::move1jobs(const QPair<double, Q
                     machinesCopy << currentMachine;
                 }
             }
-
             int newMachinesNumber = machinesCopy.size();
-            for(int l = 0; l < newMachinesNumber+1 ; ++l) {
-                if(l==newMachinesNumber && l<K_UPPER){
+            for(int l = 0; l < newMachinesNumber+1 && l<K_UPPER; ++l) {
+                if(l == 2){
+                    cout;
+                }
+                if(l==newMachinesNumber){
                     QList<uint> newM = (QList<uint>() << jobOnHand);
                     machinesCopy.push_back(newM);
                     double tf (targetFunction(machinesCopy));
                     QPair<double, QList<QList<uint> > > tempCurrentState;
                     tempCurrentState.first = tf; tempCurrentState.second = machinesCopy;
-                    if( tf <= bestNeighborState.first && tempCurrentState != currentState) {
+                    if( tf < bestNeighborState.first && tempCurrentState != bestGlobalSol) {
                         bestNeighborState = tempCurrentState;
 //                        printSol("bestNeighborState",bestNeighborState);
                     }
                     machinesCopy.pop_back();
                 }
-                else if(newMachinesNumber != machines.size() || (newMachinesNumber != machines.size() && i!=l)){
+                else if(newMachinesNumber != machines.size() || (newMachinesNumber == machines.size() && i!=l)){
                     //if newSize == oldSize => we don't want to put the job on the same machine it came from.
                     //so if they are equal => do 'if' only if i!=l. if they are not equal, always do the 'if' (the i machine was removed)
                     machinesCopy[l].push_back(jobOnHand);
                     double tf (targetFunction(machinesCopy));
                     QPair<double, QList<QList<uint> > > tempCurrentState;
                     tempCurrentState.first = tf; tempCurrentState.second = machinesCopy;
-                    if( tf <= bestNeighborState.first&& tempCurrentState != currentState) {
+                    if( tf < bestNeighborState.first) {
                         bestNeighborState = tempCurrentState;
 //                        printSol("bestNeighborState",bestNeighborState);
                     }
@@ -204,48 +237,84 @@ QPair<double, QList<QList<uint> > > LocalK2To10::move1jobs(const QPair<double, Q
             bestNeighborState.second.removeAt(i);
         }
     }
+//    bestNeighborState.first = targetFunction(bestNeighborState.second);
     return bestNeighborState;
 }
 
-QPair<double, QList<QList<uint> > > LocalK2To10::mergeMachines(const QPair<double, QList<QList<uint> > > currentState) {
-    QPair<double, QList<QList<uint> > > myCurrentState(currentState);
-    QList<QList<uint>> machines = myCurrentState.second;
-    QList<uint> summedMachines;
-    uint maxMachine(0);
-    int ind(0);
-    for(QList<uint> m : machines){
-        summedMachines.insert(ind,0);
-        for(uint job : m){
-            summedMachines[ind] += job;
-        }
-        if(summedMachines[ind] > maxMachine) maxMachine = summedMachines[ind];
-        ++ind;
-    }
+QPair<double, QList<QList<uint>>> LocalK2To10::swap(const QPair<double, QList<QList<uint>>> bestGlobalSol) {
 
-    QPair<int,int> bestMergeIndices;
-    double bestFit(INF);//closest to the max
-    bestMergeIndices.first = -1; bestMergeIndices.second = -1;
-    int numberMachines(summedMachines.size());
-    for(int i=0; i<qMin(K_UPPER, numberMachines); ++i){
-        for(int j=0; j<qMin(K_UPPER, numberMachines) ; ++j){
-            if(i!=j){
-                uint sum = summedMachines.at(i) + summedMachines.at(j);
-                if(sum <= maxMachine && (maxMachine - sum < bestFit)){
-                    bestFit = maxMachine - sum;
-                    bestMergeIndices.first = i; bestMergeIndices.second = j;
+    QPair<double, QList<QList<uint>>> bestLocalSol = bestGlobalSol;
+    cout << qPrintable(QString(__FUNCTION__));
+    QList<QList<uint>> machines = bestLocalSol.second;
+
+    for(int i = 0; i < machines.size(); ++i) {
+        QList<uint> sawThisJobsSrc;
+        for(int j = 0; j < machines[i].size(); ++j) {
+            uint jobOnHand1 = machines[i].at(j);
+            if(sawThisJobsSrc.contains(jobOnHand1)) continue;//no need to move job with same value from the same machine
+            sawThisJobsSrc.append(jobOnHand1);
+            for(int l = i+1; l < machines.size(); ++l) {
+                QList<uint> sawThisJobsDst;
+                for(int k = 0; k < machines[l].size() ; ++k) {
+                    uint jobOnHand2 = machines[l].at(k);
+                    if(sawThisJobsDst.contains(jobOnHand2) || jobOnHand1 == jobOnHand2) continue;//no need to move job with same value from the same machine
+                    machines[i][j] = jobOnHand2;
+                    machines[l][k] = jobOnHand1;
+                    double tf ( targetFunction(machines) );
+                    if( tf < bestLocalSol.first){
+                        bestLocalSol.first = tf;
+                        bestLocalSol.second = machines;
+                        return bestLocalSol;
+                    }
+                    machines[i][j] = jobOnHand1;
+                    machines[l][k] = jobOnHand2;
+
                 }
             }
         }
     }
-
-    if(bestMergeIndices.first != -1) {
-        QList<uint> m = myCurrentState.second.takeAt(bestMergeIndices.second);
-        myCurrentState.second[bestMergeIndices.first].append(m);
-        myCurrentState.first--;
-    }
-
-    return myCurrentState;
+    return bestGlobalSol;
 }
+
+//QPair<double, QList<QList<uint> > > LocalK2To10::mergeMachines(const QPair<double, QList<QList<uint> > > currentState) {
+//    QPair<double, QList<QList<uint> > > myCurrentState(currentState);
+//    QList<QList<uint>> machines = myCurrentState.second;
+//    QList<uint> summedMachines;
+//    uint maxMachine(0);
+//    int ind(0);
+//    for(QList<uint> m : machines){
+//        summedMachines.insert(ind,0);
+//        for(uint job : m){
+//            summedMachines[ind] += job;
+//        }
+//        if(summedMachines[ind] > maxMachine) maxMachine = summedMachines[ind];
+//        ++ind;
+//    }
+
+//    QPair<int,int> bestMergeIndices;
+//    double bestFit(INF);//closest to the max
+//    bestMergeIndices.first = -1; bestMergeIndices.second = -1;
+//    int numberMachines(summedMachines.size());
+//    for(int i=0; i<qMin(K_UPPER, numberMachines); ++i){
+//        for(int j=0; j<qMin(K_UPPER, numberMachines) ; ++j){
+//            if(i!=j){
+//                uint sum = summedMachines.at(i) + summedMachines.at(j);
+//                if(sum <= maxMachine && (maxMachine - sum < bestFit)){
+//                    bestFit = maxMachine - sum;
+//                    bestMergeIndices.first = i; bestMergeIndices.second = j;
+//                }
+//            }
+//        }
+//    }
+
+//    if(bestMergeIndices.first != -1) {
+//        QList<uint> m = myCurrentState.second.takeAt(bestMergeIndices.second);
+//        myCurrentState.second[bestMergeIndices.first].append(m);
+//        myCurrentState.first--;
+//    }
+
+//    return myCurrentState;
+//}
 
 double LocalK2To10::targetFunction(QList<QList<uint>> machines) {
     //Number of machines k

@@ -18,9 +18,9 @@ int main(int argc, char *argv[])
 
     initInputs();
 
-    new BandBK2To10(getInput(30,false,1));
+//    new BandBK2To10(getInput(2,false,1));
 
-//    new LocalK2To10(getInput(152,false,1));
+    new LocalK2To10(getInput(2,false,1));
     return 0;
 }
 
