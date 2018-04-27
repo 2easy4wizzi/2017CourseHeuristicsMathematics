@@ -4,6 +4,8 @@ LocalK2To10::LocalK2To10(QList<uint> allJobs)
 {
     allJobs.clear();
     allJobs << 3 << 3 << 3 << 3;//should be 4 machines !!!
+	//TODO - finish all steps
+	//remove move1jobsOptimal and mergeMachines
 
     bestGlobalSolution.first = INF;
     //solving for all different number of machines from 2 to 10 and returning best
