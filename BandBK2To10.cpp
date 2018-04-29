@@ -14,15 +14,15 @@ BandBK2To10::BandBK2To10(QList<uint> allJobs)
         bestSol->U = bestSolutionFound.first;
         cout2 << "BEST FOUND: " << bestSol->leafToString();
         cout2 << "nodes seen:" << nodesSeenSoFar << ". run time: " << (double(timer.elapsed()) / 1000) << "seconds";
-        cout2 << "cut off histogram:";
-        uint totalCutOffs(0);
-        for(int i=0; i<allJobs.size(); ++i){
-            if(cutOffHist.contains(i)){
-                cout2 << qPrintable(QString("   on depth %1 there were %2 cut offs").arg(i).arg(cutOffHist[i]));
-                totalCutOffs += cutOffHist[i];
-            }
-        }
-        cout2 << qPrintable(QString("**there were %1 cutoffs in total").arg(totalCutOffs));
+//        cout2 << "cut off histogram:";
+//        uint totalCutOffs(0);
+//        for(int i=0; i<allJobs.size(); ++i){
+//            if(cutOffHist.contains(i)){
+//                cout2 << qPrintable(QString("   on depth %1 there were %2 cut offs").arg(i).arg(cutOffHist[i]));
+//                totalCutOffs += cutOffHist[i];
+//            }
+//        }
+//        cout2 << qPrintable(QString("**there were %1 cutoffs in total").arg(totalCutOffs));
     }
 }
 
