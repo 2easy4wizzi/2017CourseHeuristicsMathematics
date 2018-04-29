@@ -2,11 +2,12 @@
 #define LOCALK2TO10_H
 
 #include <QDebug>
+#include <QTime>
 
 #define cout qDebug()
 #define INF 10000000000
 #define QT_MAX_UINT 2000000000
-#define DEBUGLEVELLOCAL 2 //0 for nothing, 1 for minimum, 2 for all
+#define DEBUGLEVELLOCAL 1 //0 for nothing, 1 for minimum, 2 for all
 #define K_UPPER 10
 #define MAX_ITER 5
 
@@ -32,7 +33,7 @@ public:
     QPair<double, QList<QList<uint>>> swap2for2(const QPair<double, QList<QList<uint>>> bestGlobalSol);
     QPair<double, QList<QList<uint>>> swap3for3(const QPair<double, QList<QList<uint>>> bestGlobalSol);
 
-    QPair<double, QList<QList<uint>>> cyclicMove(const QPair<double, QList<QList<uint>>> bestGlobalSol);
+    QPair<double, QList<QList<uint>>> move1jobsChaos(const QPair<double, QList<QList<uint>>> bestGlobalSol);
 
     /*aux functions*/
     double targetFunction(QList<QList<uint>> machines);
@@ -44,7 +45,7 @@ public:
     /*class vars*/
     QPair<double, QList<QList<uint>>> bestGlobalSolution;
     int numberOfMachines;
-
+    QPair<double, QList<QList<QList<uint>>>> seenStates;
 };
 
 #endif // LOCALK2TO10_H
