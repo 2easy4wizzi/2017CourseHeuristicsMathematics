@@ -4,23 +4,26 @@ LocalK2To10::LocalK2To10(QList<uint> allJobs)
 {
     QTime timer; timer.start();//time
     seenStates.first = INF;
-//    allJobs.clear();
-//    allJobs << 4 << 4 << 4 << 4 << 4 << 4;
+
     int startSolAlgChosen(-1);
     bestGlobalSolution.first = INF;
 
     for(int startSolAlg=0; startSolAlg<2; ++startSolAlg){
+        if(DEBUGLEVELLOCAL >= 1) cout << QString("Starting %1").arg(startSolAlg==0?"LPT":"BESTFIT");
         //solving for all different number of machines from 2 to 10 and returning best
         for(int numberOfMachines=10; numberOfMachines<=K_UPPER; ++numberOfMachines){
             if(DEBUGLEVELLOCAL >= 1) cout << "numberOfMachines" << numberOfMachines;
             if(DEBUGLEVELLOCAL >=2) {cout << numberOfMachines << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";}
             QPair<double, QList<QList<uint>>> startSol = initFirstSol(allJobs, numberOfMachines, startSolAlg);//init using numberOfMachines as global var
-            if(DEBUGLEVELLOCAL >=2) {printSol("Start   -------- startSol", startSol);}
+            if(DEBUGLEVELLOCAL >=1) {printSol("Start   -------- startSol", startSol);}
             double lowerBound = getLowerBound(numberOfMachines, allJobs);
             if(startSol.first > lowerBound){
                 QPair<double, QList<QList<uint>>> tempSolution = runLocalSearch(startSol);
                 if(tempSolution.first < bestGlobalSolution.first){
                     bestGlobalSolution = tempSolution; startSolAlgChosen = startSolAlg;
+                    if(DEBUGLEVELLOCAL >= 1) {
+                        printSol(QString("#########in %1 improvement").arg(startSolAlgChosen==0?"LPT":"BESTFIT"), bestGlobalSolution);
+                    }
                 }
             }
             else if (startSol.first < bestGlobalSolution.first){
@@ -195,13 +198,14 @@ void LocalK2To10::printSol(const QString& name,const QPair<double, QList<QList<u
 {
     cout << qPrintable(QString("   %1 found:").arg(name));
     cout << qPrintable(QString("      target function = %1, num of machines=%2").arg(sol.first).arg(sol.second.size()));
+    uint i(0);
     QString machinesContent;
     for(const QList<uint>& m : sol.second){
         uint total(0);
         for(uint j : m){
             total += j;
         }
-        machinesContent += QString("XX sum:%1 XX(").arg(total);
+        machinesContent += QString("bucket%1 sum:%2, content= (").arg(++i).arg(total);
         for(uint j : m){
             machinesContent += QString("%1, ").arg(j);
         }
@@ -209,7 +213,7 @@ void LocalK2To10::printSol(const QString& name,const QPair<double, QList<QList<u
         machinesContent += ")\n ";
     }
     machinesContent = machinesContent.mid(0,machinesContent.size()-2);
-    cout << qPrintable(QString("      machines content = %1").arg(machinesContent));
+    cout << qPrintable(QString("      machines content:\n %1").arg(machinesContent));
 }
 
 QPair<double, QList<QList<uint> > > LocalK2To10::runLocalSearch(QPair<double, QList<QList<uint> > > bestGlobalSol)
