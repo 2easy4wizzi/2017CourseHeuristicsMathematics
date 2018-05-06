@@ -1,6 +1,8 @@
 #include <windows.h>
 #include <QApplication>
 #include <algorithm>
+#include <QDir>
+#include <QDirIterator>
 
 #include "BandBK2To10.h"
 #include "LocalK2To10.h"
@@ -15,21 +17,12 @@ int main(int argc, char *argv[])
 {
     Q_UNUSED(argc);
     Q_UNUSED(argv);
-
-    initInputs();
-
-//    QString line("");
-//    for (int i = 0; i < 1000; ++i) {
-//        line += QString("<<%1").arg(getRandNumber(1,100));
-//        if(i % 50 == 0 && i !=0){
-//            cout << qPrintable(line);
-//            line = "";
-//        }
-//    }
-//    exit(0);
-
-//    new BandBK2To10(getInput(152,false,1));
-    new LocalK2To10(getInput(32,false,1));
+    QDirIterator it("../h/docs/benchMark", QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        qDebug() << it.next();
+    }
+//    initInputs();
+//    new LocalK2To10(getInput(31,false,1));
 
     return 0;
 }
@@ -106,7 +99,8 @@ const QList<uint> getInput(int inputBatch, bool shouldShuffle, int sortOrder)
     }
     double sumAll(0);
     for(const uint& job :inputReturn) sumAll+= job;
-    cout2 << "input selected:"<<inputReturn << "size" << inputReturn.size() << "sum" << sumAll;
+//    cout2 << "input selected:"<<inputReturn << "size" << inputReturn.size() << "sum" << sumAll;
+    cout2 << "input selected:" << "size" << inputReturn.size() << "sum" << sumAll;
     return inputReturn;
 }
 

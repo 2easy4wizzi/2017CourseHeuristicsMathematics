@@ -1,54 +1,54 @@
 #include "LocalK2To10.h"
 
+QPair<double, QList<QList<uint>>> LocalK2To10::runUsingStartAlg(QPair<double, QList<QList<uint> > > startSol)
+{
+    if(startSol.first > globalLowerBound){
+        QPair<double, QList<QList<uint>>> bestLocalSolution;
+        bestLocalSolution.first = INF;
+
+        if(DEBUGLEVELLOCAL >= 3) {cout << MACHINES_NUMBER << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";}
+
+        bestLocalSolution.first = INF;
+        bestLocalSolution = runLocalSearch(startSol);
+        return bestLocalSolution;
+    }
+    else {
+        return startSol;
+    }
+}
+
 LocalK2To10::LocalK2To10(QList<uint> allJobs)
 {
     QTime timer; timer.start();//time
-    seenStates.first = INF;
+    QPair<double, QList<QList<uint>>> startSol;
 
-    int startSolAlgChosen(-1);
-    bestGlobalSolution.first = INF;
+    globalLowerBound = getLowerBound(MACHINES_NUMBER, allJobs);
+    if(DEBUGLEVELLOCAL >= 2) cout << "numberOfMachines:" << MACHINES_NUMBER << "; lower bound:" << globalLowerBound;
 
-    for(int startSolAlg=0; startSolAlg<2; ++startSolAlg){
-        if(DEBUGLEVELLOCAL >= 1) cout << QString("Starting %1").arg(startSolAlg==0?"LPT":"BESTFIT");
-        //solving for all different number of machines from 2 to 10 and returning best
-        for(int numberOfMachines=MACHINES_NUMBER; numberOfMachines<=MACHINES_NUMBER; ++numberOfMachines){
-            if(DEBUGLEVELLOCAL >= 1) cout << "numberOfMachines" << numberOfMachines;
-            if(DEBUGLEVELLOCAL >=2) {cout << numberOfMachines << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";}
-            QPair<double, QList<QList<uint>>> startSol = initFirstSol(allJobs, numberOfMachines, startSolAlg);//init using numberOfMachines as global var
-            if(startSol.first < bestGlobalSolution.first){ bestGlobalSolution = startSol; }
-            if(DEBUGLEVELLOCAL >=1) {printSol("Start   -------- startSol", startSol);}
-            double lowerBound = getLowerBound(numberOfMachines, allJobs);
-            if(startSol.first > lowerBound){
-                QPair<double, QList<QList<uint>>> tempSolution = runLocalSearch(startSol);
-                if(tempSolution.first < bestGlobalSolution.first){
-                    bestGlobalSolution = tempSolution; startSolAlgChosen = startSolAlg;
-                    if(DEBUGLEVELLOCAL >= 1) {
-                        printSol(QString("#########in %1 improvement").arg(startSolAlgChosen==0?"LPT":"BESTFIT"), bestGlobalSolution);
-                    }
-                }
-            }
-            else if (startSol.first < bestGlobalSolution.first){
-                bestGlobalSolution = startSol; startSolAlgChosen = startSolAlg;
-            }
-            if(DEBUGLEVELLOCAL >=2) cout << numberOfMachines << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
-        }
-    }
+    startSol = initFirstSol(allJobs, MACHINES_NUMBER, "LPT");//init using numberOfMachines as global var
+    if(DEBUGLEVELLOCAL >= 2) {printSol("Start   LPT", startSol);}
+    QPair<double, QList<QList<uint>>> bestLptFound = runUsingStartAlg(startSol);
+    if(DEBUGLEVELLOCAL >= 2) {printSol(QString("END   -------- bestSolutionFound for alg LPT"), removeZerosFromSol(bestLptFound)); cout<<"";}
 
-    //done - some summary info:
-//    printSol("Start   -------- startSol", initFirstSol(allJobs, bestGlobalSolution.second.size()));//for knowing what was the first sol)
-//    printSol("END   -------- with 0: bestSolutionFound", bestGlobalSolution);
-    printSol(QString("END   -------- bestSolutionFound for alg %1").arg(startSolAlgChosen==0?"LPT":"BESTFIT"), removeZerosFromSol(bestGlobalSolution));
-    cout << "Run time: " << (double(timer.elapsed()) / 1000) << "seconds";
+    startSol = initFirstSol(allJobs, MACHINES_NUMBER, "BESTFIT");//init using numberOfMachines as global var
+    if(DEBUGLEVELLOCAL >= 2) {printSol("Start   BESTFIT", startSol);}
+    QPair<double, QList<QList<uint>>> bestBestFitFound = runUsingStartAlg(startSol);
+    if(DEBUGLEVELLOCAL >= 2) {printSol(QString("END   -------- bestSolutionFound for alg BESTFIT"), removeZerosFromSol(bestBestFitFound)); cout<<"";}
+
+    bool lptWon(bestLptFound.first<=bestBestFitFound.first);
+    bestGlobalSolution = (lptWon) ? bestLptFound : bestBestFitFound;
+    if(DEBUGLEVELLOCAL >= 1) printSol(QString("END   -------- bestSolutionFound for start alg %1").arg(lptWon?"LPT":"BESTFIT"), removeZerosFromSol(bestGlobalSolution)); cout<<"";
+    if(DEBUGLEVELLOCAL >= 1) cout << "Run time: " << (double(timer.elapsed()) / 1000) << "seconds";
 }
 
-QPair<double, QList<QList<uint> > > LocalK2To10::initFirstSol(QList<uint> allJobs, int numberOfMachines, int startSolAlg)
+QPair<double, QList<QList<uint> > > LocalK2To10::initFirstSol(QList<uint> allJobs, int numberOfMachines, QString startSolAlg)
 {
     QPair<double, QList<QList<uint> > > retVal;
-    if(startSolAlg == 0){
+    if(startSolAlg == "LPT"){
         QPair<double, QList<QList<uint> > > lptFirstSol = runLpt(allJobs, numberOfMachines);
         retVal = lptFirstSol;
     }
-    else if(startSolAlg == 1){
+    else if(startSolAlg == "BESTFIT"){
         QPair<double, QList<QList<uint> > > bestFitSol = runBestFit(allJobs, numberOfMachines);
         retVal = bestFitSol;
     }
@@ -143,7 +143,7 @@ QPair<double, QList<QList<uint> > > LocalK2To10::runBestFit(QList<uint> allJobs,
     }
     double pigeonholePrinciple = globalLower3;
 
-    if(DEBUGLEVELLOCAL == 2) {
+    if(DEBUGLEVELLOCAL >= 3) {
         cout << "pMax: " << pMax;
         cout << "perfectSplit: " << perfectSplit;
         cout << "pigeonholePrinciple: " << pigeonholePrinciple;
@@ -214,7 +214,7 @@ void LocalK2To10::printSol(const QString& name,const QPair<double, QList<QList<u
         machinesContent += ")\n ";
     }
     machinesContent = machinesContent.mid(0,machinesContent.size()-2);
-    cout << qPrintable(QString("      machines content:\n %1").arg(machinesContent));
+//    cout << qPrintable(QString("      machines content:\n %1").arg(machinesContent));
 }
 
 QPair<double, QList<QList<uint> > > LocalK2To10::runLocalSearch(QPair<double, QList<QList<uint> > > bestGlobalSol)
@@ -224,14 +224,15 @@ QPair<double, QList<QList<uint> > > LocalK2To10::runLocalSearch(QPair<double, QL
     uint iterations(0);
     bool cont(true);
     while(cont){
-        if(DEBUGLEVELLOCAL >=2) cout << "ITER"<< ++iterations;
+        if(DEBUGLEVELLOCAL >= 3) cout << "ITER"<< ++iterations;
         bestLocalSol = doAllSearchSteps(bestLocalSol);
         if( bestLocalSol != bestGlobalSol){
-            if(DEBUGLEVELLOCAL >=2) printSol("bestLocalSol",bestLocalSol);
+            if(DEBUGLEVELLOCAL >= 3) printSol("bestLocalSol",bestLocalSol);
+            if(DEBUGLEVELLOCAL >= 2) printSol("IMPROVEMENT: bestLocalSol",bestLocalSol);
             bestGlobalSol = bestLocalSol;
         }
         else{
-            if(DEBUGLEVELLOCAL >=2) cout << qPrintable(QString("   done with %1 iterations").arg(iterations));
+            if(DEBUGLEVELLOCAL >= 3) cout << qPrintable(QString("   done with %1 iterations").arg(iterations));
             cont = false;
         }
 
@@ -242,7 +243,21 @@ QPair<double, QList<QList<uint> > > LocalK2To10::runLocalSearch(QPair<double, QL
 
 QPair<double, QList<QList<uint> > > LocalK2To10::doAllSearchSteps(const QPair<double, QList<QList<uint> > > bestGlobalSol)
 {
+//    static int iter = 0;
+    if(bestGlobalSol.first <= globalLowerBound){
+        return bestGlobalSol;
+    }
+//    if(DEBUGLEVELLOCAL >= 1) cout << ++iter<< "globalLowerBound" << globalLowerBound << "TF" <<bestGlobalSol.first << "MSE:" << qSqrt(mseGlobal) << (mseGlobal == mseGlobalBack) ;
     QPair<double, QList<QList<uint>>> bestLocalSol;
+    summedMachinesGlobal.clear();
+    for(QList<uint> machine: bestGlobalSol.second) {
+        uint totalSum(0);
+        for(uint job: machine) {
+            totalSum += job;
+        }
+        summedMachinesGlobal.append(totalSum);
+    }
+    mseGlobal = calcMse(summedMachinesGlobal);
 
     //step1
     bestLocalSol = move1jobsOptimal(bestGlobalSol, true);
@@ -270,10 +285,10 @@ QPair<double, QList<QList<uint> > > LocalK2To10::doAllSearchSteps(const QPair<do
         return bestLocalSol;
     }
     //step6
-    bestLocalSol = swap3for3(bestGlobalSol,false);
-    if(bestLocalSol != bestGlobalSol){
-        return bestLocalSol;
-    }
+//    bestLocalSol = swap3for3(bestGlobalSol,false);
+//    if(bestLocalSol != bestGlobalSol){
+//        return bestLocalSol;
+//    }
 
 //    //step7
 //    bestLocalSol = move3jobs(bestGlobalSol,false);
@@ -282,19 +297,19 @@ QPair<double, QList<QList<uint> > > LocalK2To10::doAllSearchSteps(const QPair<do
 //    }
 
     //step8 and the last 1
-    if(bestGlobalSol.first < seenStates.first){
-        seenStates.first = bestGlobalSol.first;
-        seenStates.second.clear();
-        seenStates.second.append(bestGlobalSol.second);
-    }
+//    if(bestGlobalSol.first < seenStates.first){
+//        seenStates.first = bestGlobalSol.first;
+//        seenStates.second.clear();
+//        seenStates.second.append(bestGlobalSol.second);
+//    }
 
-    if(seenStates.second.size() < 1000){
-        bestLocalSol = move1jobsChaos(bestGlobalSol);
-        if(bestLocalSol != bestGlobalSol){
-            return bestLocalSol;
-        }
-    }
-
+//    if(seenStates.second.size() < 1000){
+//        bestLocalSol = move1jobsChaos(bestGlobalSol);
+//        if(bestLocalSol != bestGlobalSol){
+//            return bestLocalSol;
+//        }
+//    }
+mseGlobalBack = mseGlobal;
 
     return bestGlobalSol;
 
@@ -302,9 +317,10 @@ QPair<double, QList<QList<uint> > > LocalK2To10::doAllSearchSteps(const QPair<do
 
 QPair<double, QList<QList<uint> > > LocalK2To10::move1jobsOptimal(const QPair<double, QList<QList<uint> > > bestGlobalSol, bool opt)
 {
-    if(DEBUGLEVELLOCAL >=2) cout << qPrintable(QString(__FUNCTION__));
+    if(DEBUGLEVELLOCAL >= 3) cout << qPrintable(QString(__FUNCTION__));
     QList<QList<uint>> machines = bestGlobalSol.second;
     QPair<double, QList<QList<uint> > > bestNeighborState(bestGlobalSol);
+    QList<uint> summedMachineCopy = summedMachinesGlobal;
 
     for(int i = 0; i < bestGlobalSol.second.size(); ++i) {
         QList<uint> sawThisJobs;
@@ -316,13 +332,31 @@ QPair<double, QList<QList<uint> > > LocalK2To10::move1jobsOptimal(const QPair<do
             for(int l = i+1; l < bestGlobalSol.second.size(); ++l) {
                 machines[l].push_back(jobOnHand);
                 double tf (targetFunction(machines));
+                summedMachineCopy[i] -= jobOnHand;
+                summedMachineCopy[l] += jobOnHand;
+                //MSE
+                double mse = calcMse(summedMachineCopy);
+
                 QPair<double, QList<QList<uint> > > tempCurrentState;
                 tempCurrentState.first = tf; tempCurrentState.second = machines;
-                if( tf < bestNeighborState.first) {
+                if( tf < bestNeighborState.first && mse < mseGlobal) {
+                    mseGlobal = mse;
+                    bestNeighborState = tempCurrentState;
+                    if(!opt) return tempCurrentState;
+                }
+                else if( tf < bestNeighborState.first) {
+                    mseGlobal = mse;
+                    bestNeighborState = tempCurrentState;
+                    if(!opt) return tempCurrentState;
+                }
+                else if(tf == bestNeighborState.first && mse < mseGlobal) {
+                    mseGlobal = mse;
                     bestNeighborState = tempCurrentState;
                     if(!opt) return tempCurrentState;
                 }
                 machines[l].pop_back();
+                summedMachineCopy[i] += jobOnHand;
+                summedMachineCopy[l] -= jobOnHand;
             }
             machines[i][j] = jobOnHand;
         }
@@ -332,7 +366,7 @@ QPair<double, QList<QList<uint> > > LocalK2To10::move1jobsOptimal(const QPair<do
 
 QPair<double, QList<QList<uint> > > LocalK2To10::move2jobsOptimal(const QPair<double, QList<QList<uint> > > bestGlobalSol, bool opt)
 {
-    if(DEBUGLEVELLOCAL >=2) cout << qPrintable(QString(__FUNCTION__));
+    if(DEBUGLEVELLOCAL >= 3) cout << qPrintable(QString(__FUNCTION__));
     QList<QList<uint>> machines = bestGlobalSol.second;
     QPair<double, QList<QList<uint> > > bestNeighborState(bestGlobalSol);
 
@@ -376,7 +410,7 @@ QPair<double, QList<QList<uint> > > LocalK2To10::move2jobsOptimal(const QPair<do
 
 QPair<double, QList<QList<uint> > > LocalK2To10::move3jobs(const QPair<double, QList<QList<uint> > > bestGlobalSol, bool opt)
 {
-    if(DEBUGLEVELLOCAL >=2) cout << qPrintable(QString(__FUNCTION__));
+    if(DEBUGLEVELLOCAL >= 3) cout << qPrintable(QString(__FUNCTION__));
     QList<QList<uint>> machines = bestGlobalSol.second;
     QPair<double, QList<QList<uint> > > bestNeighborState(bestGlobalSol);
 
@@ -431,7 +465,7 @@ QPair<double, QList<QList<uint> > > LocalK2To10::move3jobs(const QPair<double, Q
 
 QPair<double, QList<QList<uint>>> LocalK2To10::swap1for1(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt) {
 
-    if(DEBUGLEVELLOCAL >=2) cout << qPrintable(QString(__FUNCTION__));
+    if(DEBUGLEVELLOCAL >= 3) cout << qPrintable(QString(__FUNCTION__));
     QPair<double, QList<QList<uint>>> bestLocalSol = bestGlobalSol;
     QList<QList<uint>> machines = bestLocalSol.second;
 
@@ -466,7 +500,7 @@ QPair<double, QList<QList<uint>>> LocalK2To10::swap1for1(const QPair<double, QLi
 
 QPair<double, QList<QList<uint> > > LocalK2To10::swap2for1(const QPair<double, QList<QList<uint> > > bestGlobalSol, bool opt)
 {
-    if(DEBUGLEVELLOCAL >=2) cout << qPrintable(QString(__FUNCTION__));
+    if(DEBUGLEVELLOCAL >= 3) cout << qPrintable(QString(__FUNCTION__));
     QPair<double, QList<QList<uint>>> bestLocalSol = bestGlobalSol;
     QList<QList<uint>> machines = bestLocalSol.second;
 
@@ -513,7 +547,7 @@ QPair<double, QList<QList<uint> > > LocalK2To10::swap2for1(const QPair<double, Q
 
 QPair<double, QList<QList<uint> > > LocalK2To10::swap2for2(const QPair<double, QList<QList<uint> > > bestGlobalSol, bool opt)
 {
-    if(DEBUGLEVELLOCAL >=2) cout << qPrintable(QString(__FUNCTION__));
+    if(DEBUGLEVELLOCAL >= 3) cout << qPrintable(QString(__FUNCTION__));
     QPair<double, QList<QList<uint>>> bestLocalSol = bestGlobalSol;
     QList<QList<uint>> machines = bestLocalSol.second;
 
@@ -565,7 +599,7 @@ QPair<double, QList<QList<uint> > > LocalK2To10::swap2for2(const QPair<double, Q
 
 QPair<double, QList<QList<uint> > > LocalK2To10::swap3for3(const QPair<double, QList<QList<uint> > > bestGlobalSol, bool opt)
 {
-    if(DEBUGLEVELLOCAL >=2) cout << qPrintable(QString(__FUNCTION__));
+    if(DEBUGLEVELLOCAL >= 3) cout << qPrintable(QString(__FUNCTION__));
     QPair<double, QList<QList<uint>>> bestLocalSol = bestGlobalSol;
     QList<QList<uint>> machines = bestLocalSol.second;
 
@@ -627,47 +661,13 @@ QPair<double, QList<QList<uint> > > LocalK2To10::swap3for3(const QPair<double, Q
     return bestGlobalSol;
 }
 
-QPair<double, QList<QList<uint> > > LocalK2To10::move1jobsChaos(const QPair<double, QList<QList<uint> > > bestGlobalSol)
-{
-
-    if(DEBUGLEVELLOCAL >=2) cout << qPrintable(QString(__FUNCTION__));
-    QList<QList<uint>> machines = bestGlobalSol.second;
-    QPair<double, QList<QList<uint> > > sameTfDiffMachines(bestGlobalSol);
-    bool foundDiffMachines(false);
-
-    for(int i = 0; i < bestGlobalSol.second.size(); ++i) {
-        QList<uint> sawThisJobs;
-        for(int j = 0; j < machines[i].size(); ++j) {
-            uint jobOnHand = machines[i][j];
-            if(sawThisJobs.contains(jobOnHand) || jobOnHand==0) continue;//no need to move job with same value from the same machine or when job is 0
-            machines[i][j] = 0;
-            sawThisJobs.append(jobOnHand);
-            for(int l = i+1; l < bestGlobalSol.second.size(); ++l) {
-                machines[l].push_back(jobOnHand);
-                double tf (targetFunction(machines));
-                QPair<double, QList<QList<uint> > > tempCurrentState;
-                tempCurrentState.first = tf; tempCurrentState.second = machines;
-                if( tf < bestGlobalSol.first) {
-                    return tempCurrentState;
-                }
-                else if (tf == sameTfDiffMachines.first && machines != sameTfDiffMachines.second && !seenStates.second.contains(machines) && !foundDiffMachines){
-                    foundDiffMachines = true;
-                    seenStates.second.append(machines);
-                    sameTfDiffMachines = tempCurrentState;
-                }
-                machines[l].pop_back();
-            }
-            machines[i][j] = jobOnHand;
-        }
-    }
-    return sameTfDiffMachines;
-}
 
 double LocalK2To10::targetFunction(QList<QList<uint>> machines) {
     //Number of machines k
     uint machinesNumber = machines.size();
     uint maximalMachineTime = 0;
     uint emptyMachines = 0;
+
     //Sum all machines jobs time and gets maximal machine by time
     for(QList<uint> machine : machines) {
         if(machine.isEmpty()){
@@ -684,6 +684,15 @@ double LocalK2To10::targetFunction(QList<QList<uint>> machines) {
         }
     }
     return (machinesNumber + maximalMachineTime - emptyMachines);
+}
+
+double LocalK2To10::calcMse(QList<uint> summedMachine)
+{
+    double mse(0);
+    for(const uint machineSum :summedMachine ){
+        mse += (machineSum * machineSum);
+    }
+    return mse;
 }
 
 double LocalK2To10::getLowerBound(int numberOfMachines,QList<uint> allJobs)
@@ -710,7 +719,7 @@ double LocalK2To10::getLowerBound(int numberOfMachines,QList<uint> allJobs)
     }
     double pigeonholePrinciple = globalLower3 + numberOfMachines;
 
-    if(DEBUGLEVELLOCAL == 2) {
+    if(DEBUGLEVELLOCAL >= 3) {
         cout << "pMax: " << pMax;
         cout << "perfectSplit: " << perfectSplit;
         cout << "pigeonholePrinciple: " << pigeonholePrinciple;
