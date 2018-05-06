@@ -9,6 +9,7 @@
 #define QT_MAX_UINT 2000000000
 #define DEBUGLEVELLOCAL 1 //0 for nothing, 1 for minimum, 2 for all
 #define K_UPPER 10
+#define MACHINES_NUMBER 5
 
 class LocalK2To10
 {

@@ -11,10 +11,11 @@ LocalK2To10::LocalK2To10(QList<uint> allJobs)
     for(int startSolAlg=0; startSolAlg<2; ++startSolAlg){
         if(DEBUGLEVELLOCAL >= 1) cout << QString("Starting %1").arg(startSolAlg==0?"LPT":"BESTFIT");
         //solving for all different number of machines from 2 to 10 and returning best
-        for(int numberOfMachines=10; numberOfMachines<=K_UPPER; ++numberOfMachines){
+        for(int numberOfMachines=MACHINES_NUMBER; numberOfMachines<=MACHINES_NUMBER; ++numberOfMachines){
             if(DEBUGLEVELLOCAL >= 1) cout << "numberOfMachines" << numberOfMachines;
             if(DEBUGLEVELLOCAL >=2) {cout << numberOfMachines << "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";}
             QPair<double, QList<QList<uint>>> startSol = initFirstSol(allJobs, numberOfMachines, startSolAlg);//init using numberOfMachines as global var
+            if(startSol.first < bestGlobalSolution.first){ bestGlobalSolution = startSol; }
             if(DEBUGLEVELLOCAL >=1) {printSol("Start   -------- startSol", startSol);}
             double lowerBound = getLowerBound(numberOfMachines, allJobs);
             if(startSol.first > lowerBound){
