@@ -38,8 +38,8 @@ LocalK2To10::LocalK2To10(QList<uint> allJobs, int _numberOfMachines):numberOfMac
         if(DEBUGLEVELLOCAL >= 2) {printSol(QString("END   -------- bestSolutionFound for alg BESTFIT"), removeZerosFromSol(bestBestFitFound)); cout<<"";}
 
         bool lptWon(bestLptFound.first<=bestBestFitFound.first);
-        bestGlobalSolution = (lptWon) ? bestLptFound : bestBestFitFound;
-        if(DEBUGLEVELLOCAL >= 1) printSol(QString("END   -------- bestSolutionFound for start alg %1").arg(lptWon?"LPT":"BESTFIT"), removeZerosFromSol(bestGlobalSolution)); cout<<"";
+        bestGlobalSolution = (lptWon) ? bestLptFound : bestBestFitFound; bestGlobalSolution = removeZerosFromSol(bestGlobalSolution);
+        if(DEBUGLEVELLOCAL >= 1) printSol(QString("END   -------- bestSolutionFound for start alg %1").arg(lptWon?"LPT":"BESTFIT"), bestGlobalSolution); cout<<"";
         if(DEBUGLEVELLOCAL >= 1) cout << "Run time: " << (double(timer.elapsed()) / 1000) << "seconds";
     }
 }

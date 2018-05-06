@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
 
     QList<QPair<QString,QString>> inputToSol = getAllTestsNames();
     runLocalSearch(inputToSol);
+    //TODO std of mistakes. remover content from prints. add MSE to other steps
     return 0;
 }
 
@@ -55,7 +56,7 @@ void runLocalSearch(QList<QPair<QString,QString>> inputToSol){
         }
         else{
             bad[allJobs.size()]++;
-            cout << "***Different";
+            cout << "***Different" << local->bestGlobalSolution.first - tf;
         }
         cout << "Run time: " << (double(timer.elapsed()) / 1000) << "seconds";
         if(allJobs.size() == runOnThisSize) {cout << ++j; cout << QString("Correct  (size-numberCorrect):") << good; cout << QString("Mistakes(size-numberMistakes):") << bad;}
