@@ -12,19 +12,207 @@ void initInputs();
 const QList<uint> getInput(int inputBatch, bool shouldShuffle, int sortOrder);
 QList<uint> shuffleMyQLIST(QList<uint> &input3rand);
 uint getRandNumber(uint low, uint high );
+void runOnAllFolder();
+QList<QPair<QString, QString> > getAllTestsNames();
+const QList<uint> getInputFromFile(QPair<QString,QString> inputToSol, double& tf, int& numberOfMachines);
+QList<uint> parseFiles(QPair<QString,QString> inputToSol, double& tf, int &numberOfMachines);
+void runLocalSearch(QList<QPair<QString,QString>> inputToSol);
 
 int main(int argc, char *argv[])
 {
     Q_UNUSED(argc);
     Q_UNUSED(argv);
-    QDirIterator it("../h/docs/benchMark", QDirIterator::Subdirectories);
-    while (it.hasNext()) {
-        qDebug() << it.next();
-    }
-//    initInputs();
-//    new LocalK2To10(getInput(31,false,1));
 
+    QList<QPair<QString,QString>> inputToSol = getAllTestsNames();
+    runLocalSearch(inputToSol);
     return 0;
+}
+
+//    new LocalK2To10(getInput(31,false,1));
+//    initInputs();
+void runLocalSearch(QList<QPair<QString,QString>> inputToSol){
+
+    QMap<int,int> good;
+    QMap<int,int> bad;
+    int runOnThisSize(1000);
+    int j(0);
+    for (int i = 0; i < inputToSol.size(); ++i) {
+        cout << QString("--------------------START %1--------------------------------").arg(i+1);
+        QTime timer; timer.start();
+        QPair<QString,QString> inputToSolPair = inputToSol.at(i);
+        cout << QString("input file number %1: inputName=%2 and solutionName=%3").arg(i+1).arg(inputToSolPair.first).arg(inputToSolPair.second);
+        double tf(0); int numberOfMachines(0);
+        const QList<uint> allJobs = getInputFromFile(inputToSolPair, tf, numberOfMachines); //getting jobs from input file, printing data from files(input and sol file) and taking the upperBound as targer function(tf)
+        if(allJobs.size() != runOnThisSize) continue;
+        LocalK2To10* local = new LocalK2To10(allJobs, numberOfMachines);
+        cout << "----Our Results-------";
+        local->printSol("best from Our local search",local->bestGlobalSolution);
+        cout << "\n----Comparison for the %1 example----";
+        cout << QString("***tf from benchmark was %1(we added the number of machines) and target function from our local search is %2").arg(tf).arg(local->bestGlobalSolution.first);
+        if(tf == local->bestGlobalSolution.first){
+            good[allJobs.size()]++;
+            cout << "***RESULT IS THE SAME";
+        }
+        else{
+            bad[allJobs.size()]++;
+            cout << "***Different";
+        }
+        cout << "Run time: " << (double(timer.elapsed()) / 1000) << "seconds";
+        if(allJobs.size() == runOnThisSize) {cout << ++j; cout << QString("Correct  (size-numberCorrect):") << good; cout << QString("Mistakes(size-numberMistakes):") << bad;}
+        cout << QString("-----------END %1-----------------------------------------").arg(i+1);
+    }
+    cout << QString("Correct  (size-numberCorrect):") << good;
+    cout << QString("Mistakes(size-numberMistakes):") << bad;
+}
+
+
+QList<uint> parseFiles(QPair<QString,QString> inputToSol,double& tf, int& numberOfMachines){
+    QList<uint> retVal;
+    QFile file(inputToSol.first);
+    QFileInfo fileInfo(file.fileName());
+    QString fileName(fileInfo.fileName());
+    if(fileName.startsWith("NU") || fileName.startsWith("U")){
+        QStringList fileNameList = fileName.split("_");
+        QString solFileNameFormat=QString("%1_%2_%3_%4_%5").arg(fileNameList.at(0)).arg(fileNameList.at(1)).arg(fileNameList.at(3)).arg(fileNameList.at(2)).arg(fileNameList.at(4));
+        QString fullPathToSolFile = QString("%1%2%3").arg(fileInfo.dir().absolutePath()).arg("/SOL_").arg(solFileNameFormat);
+        QFileInfo check_file(fullPathToSolFile);
+        if (check_file.exists() && check_file.isFile()) {
+            QFile fileSol(fullPathToSolFile);
+            QFileInfo fileInfoSol(fileSol.fileName());
+            QString fileNameSol(fileInfoSol.fileName());
+
+            if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+                return retVal;
+            if (!fileSol.open(QIODevice::ReadOnly | QIODevice::Text))
+                return retVal;
+            int lineIndex(0);
+            int machinesNum(0);
+            int jobsNum(0);
+            QList<uint> allJobs;
+
+            while (!file.atEnd()) {
+                QByteArray line = file.readLine();
+                if(lineIndex == 0)  machinesNum = line.trimmed().toInt();
+                else if(lineIndex == 1) jobsNum = line.trimmed().toInt();
+                if(lineIndex == 2){
+                    QString lineStr = line.trimmed();
+                    QStringList jobsAsStrings = lineStr.split("  ");
+                    for(QString s : jobsAsStrings) { allJobs << s.toUInt(); }
+                }
+                lineIndex++;
+            }
+            file.close();
+
+            cout << QString("***Data from file %1: machinesNum=%2 jobsNum=%3").arg(fileName).arg(machinesNum).arg(jobsNum)<< "allJobs" << allJobs;
+            retVal = allJobs;
+
+            lineIndex = 0;
+            int machinesNumSol(0);
+            int jobsNumSol(0);
+            int lowerBound(0); int upperBound(0); int isOptimal(0);
+            QList<uint> summedMachines;
+            QList<QList<uint>> machines;
+            int machinesIndex(0);
+            while (!fileSol.atEnd()) {
+                QByteArray line = fileSol.readLine();
+                if(lineIndex == 0)  machinesNumSol = line.trimmed().toInt();
+                else if(lineIndex == 1) jobsNumSol = line.trimmed().toInt();
+                else if(lineIndex == 2){
+                    QString lineStr = line.trimmed();
+                    QStringList jobsAsStrings = lineStr.split(" ");
+                    for (int i = 0; i < jobsAsStrings.size(); ++i) {
+                        QString s = jobsAsStrings[i];
+                        if(i==0) lowerBound = s.toInt();
+                        if(i==1) upperBound = s.toInt();
+                        if(i==2) isOptimal = s.toInt();
+                    }
+                    if(isOptimal == 0) cout << "NOT OPTIMAL:" << fileNameSol;
+                }
+                if(lineIndex > 2){//each 3 is a machine info (first row indices of jobs, second row values of jobs, third row sum of the machine
+                    if((lineIndex-3)%3 == 0){//dont need the jobs indices
+                    }
+                    else if((lineIndex-3)%3 == 1){//machine values
+                        QList<uint> newMachine;
+                        QString lineStr = line.trimmed();
+                        QStringList jobsAsStrings = lineStr.split(" ");
+                        for(QString s : jobsAsStrings) { newMachine << s.toUInt(); }
+                        machines.push_back(newMachine);
+                    }
+                    else if((lineIndex-3)%3 == 2){//machine sum
+                        summedMachines.push_back(line.trimmed().toInt());
+                        machinesIndex++;//only here we go to next machine
+                    }
+                }
+                lineIndex++;
+            }
+            QString format("***SOLUTION Data from file %1: machinesNum=%2 jobsNum=%3 lowerBound=%4 upperBound=%5 isOptimal=%6");
+            cout << QString(format).arg(fileNameSol).arg(machinesNumSol).arg(jobsNumSol).arg(lowerBound).arg(upperBound).arg(isOptimal);
+            tf = upperBound + machinesNumSol;
+            numberOfMachines = machinesNumSol;
+            cout << "\tContent of machines summed" << summedMachines;
+            cout << "\tContent of machines" << machines;
+            fileSol.close();
+
+        }
+    }
+    return retVal;
+}
+
+
+const QList<uint> getInputFromFile(QPair<QString,QString> inputToSol, double& tf, int& numberOfMachines)
+{
+    QList<uint> inputReturn = parseFiles(inputToSol, tf, numberOfMachines);
+
+
+    if(inputReturn.isEmpty()) return inputReturn;
+    //sorting from high to low
+    std::sort(inputReturn.rbegin(), inputReturn.rend());
+
+    double sumAll(0);
+    for(const uint& job :inputReturn) sumAll+= job;
+    //cout2 << "input selected:"<<inputReturn << "size" << inputReturn.size() << "sum" << sumAll;
+    cout2 << "input selected:" << "size" << inputReturn.size() << "sum" << sumAll;
+    return inputReturn;
+}
+
+QList<QPair<QString,QString>> getAllTestsNames(){
+    QMap<int,int> numberOfJobs;
+    QList<QPair<QString,QString>> inputToSol;
+    QDirIterator it("../h/docs/benchMark/all", QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        QFile file(it.next());
+        QFileInfo fileInfo(file.fileName());
+        QString fileName(fileInfo.fileName());
+        if(fileName.startsWith("NU") || fileName.startsWith("U")){
+            QStringList fileNameList = fileName.split("_");
+            QString solFileNameFormat=QString("%1_%2_%3_%4_%5").arg(fileNameList.at(0)).arg(fileNameList.at(1)).arg(fileNameList.at(3)).arg(fileNameList.at(2)).arg(fileNameList.at(4));
+            QString fullPathToSolFile = QString("%1%2%3").arg(fileInfo.dir().absolutePath()).arg("/SOL_").arg(solFileNameFormat);
+            QFileInfo check_file(fullPathToSolFile);
+            if (check_file.exists() && check_file.isFile()) {
+                QString s = fileNameList.at(2); numberOfJobs[s.toInt()]++; //just to count
+                QFile fileSol(fullPathToSolFile);
+                QFileInfo fileInfoSol(fileSol.fileName());
+                QString fileNameSol(fileInfoSol.fileName());
+                QPair<QString,QString> p;
+                p.first = fileInfo.absoluteFilePath();
+                p.second = fullPathToSolFile;
+                inputToSol.push_back(p);
+            }
+
+        }
+//        static int j=0;
+//        if(++j == 5) break;
+    }
+    cout << "number of jobs to how many files have this jobs. for example (10,12) means 12 files have 10 jobs tasks\n" <<numberOfJobs;
+    return inputToSol;
+}
+
+
+void runOnAllFolder(){
+    QDirIterator it("../h/docs/benchMark/all", QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+
+    }
 }
 
 void initInputs(){
@@ -86,6 +274,8 @@ void initInputs(){
 const QList<uint> getInput(int inputBatch, bool shouldShuffle, int sortOrder)
 {
     QList<uint> inputReturn = inputsMap.contains(inputBatch) ? inputsMap[inputBatch] : QList<uint>();
+
+    if(inputReturn.isEmpty()) return inputReturn;
     if(shouldShuffle){
         inputReturn = shuffleMyQLIST(inputReturn);
     }

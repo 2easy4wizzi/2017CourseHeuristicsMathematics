@@ -15,7 +15,7 @@
 class LocalK2To10
 {
 public:
-    LocalK2To10(QList<uint> allJobs);
+    LocalK2To10(QList<uint> allJobs, int _numberOfMachines);
     /*init*/
     QPair<double, QList<QList<uint>>> initFirstSol(QList<uint> allJobs, int numberOfMachines, QString startSolAlg);
     QPair<double, QList<QList<uint>>> runLpt(QList<uint> allJobs, int numberOfMachines);
@@ -52,6 +52,7 @@ public:
     double mseGlobal;
     double mseGlobalBack;
     double globalLowerBound;
+    int numberOfMachines;
 };
 
 #endif // LOCALK2TO10_H
