@@ -26,6 +26,23 @@ BandBK2To10::BandBK2To10(QList<uint> allJobs)
     }
 }
 
+BandBK2To10::BandBK2To10(QList<uint> allJobs, int _numberOfMachines) : numberOfMachines(_numberOfMachines)
+{
+    if(allJobs.isEmpty()){ cout2 << "input is empty"; return; }
+    QTime timer; timer.start();//time
+    nodesSeenSoFar = 0; nodesActive = 0;//memory leak
+    calculateGlobalLowerBound(allJobs);
+    bestSolutionFound.first = INF;
+    Node* root = initializeRoot(allJobs);
+    if(root != NULL){
+        runBnbRec(root, 0);
+        Node* bestSol = new Node(bestSolutionFound.second, QList<uint>());
+        bestSol->U = bestSolutionFound.first;
+        cout2 << "BEST FOUND: " << bestSol->leafToString();
+        cout2 << "nodes seen:" << nodesSeenSoFar << ". run time: " << (double(timer.elapsed()) / 1000) << "seconds";
+    }
+}
+
 Node* BandBK2To10::initializeRoot(const QList<uint> &allJobs)
 {
     Node* treeHead = new Node(QList<QList<uint>>(), allJobs);
@@ -33,6 +50,10 @@ Node* BandBK2To10::initializeRoot(const QList<uint> &allJobs)
     QList<uint> firstMachine;
     firstMachine.push_back(job);
     treeHead->machines.push_back(firstMachine);
+    for(int i=1; i<numberOfMachines; ++i){
+        QList<uint> machine;
+        treeHead->machines.push_back(machine);
+    }
     calcLowerBound(treeHead);
     calcUpperBoundAndCheckBest(treeHead);
 
@@ -61,7 +82,7 @@ void BandBK2To10::calcLowerBound(Node *node) const
     uint bestLocalLowerBound = 0;
 
     for(const QList<uint>& machine: node->machines) {
-        uint sumI = node->machines.size();
+        uint sumI = numberOfMachines;
         for(const uint& job: machine) {
             sumI += job;
         }
@@ -69,13 +90,13 @@ void BandBK2To10::calcLowerBound(Node *node) const
             bestLocalLowerBound = sumI;
         }
     }
-    uint bestGlobalLowerBound = getGlobalLowerByMachinesSize(node->machines.size());
+    uint bestGlobalLowerBound = getGlobalLowerByMachinesSize();
     node->L = qMax(bestGlobalLowerBound, bestLocalLowerBound);
 }
 
 //given a nodes current number of machines - return the maximum of 3 global lower bounds
-uint BandBK2To10::getGlobalLowerByMachinesSize(uint machinesSize) const{
-    return qMax( qMax(perfectSplit[machinesSize],pMax), pigeonholePrinciple[machinesSize] );
+uint BandBK2To10::getGlobalLowerByMachinesSize() const{
+    return qMax( qMax(perfectSplit,pMax), pigeonholePrinciple );
 }
 
 /*upper bound - "alg" for upper bound
@@ -105,16 +126,10 @@ void BandBK2To10::calcUpperBoundAndCheckBest(Node *node)
     double lowestUpperfound(INF);
     QList<QList<uint>> bestMachines;
 
-    for(int k = summedMachines.size(); k <= K_UPPER; k++){
+    for(int k = numberOfMachines; k <= numberOfMachines; k++){
         QList<uint> localSummedMachines(summedMachines);
         QList<QList<uint>> localMachines(machines);
         QList<uint> localRemainng(remaning);
-
-        /*open emtpy machines (k - summedMachines.size())*/
-        for(int r=summedMachines.size(); r<k; ++r){
-            localSummedMachines.append(0);
-            localMachines.append(QList<uint>());
-        }
 
         int startSize (localRemainng.size());
         for (int i = 0; i < startSize; ++i) {
@@ -183,11 +198,8 @@ void BandBK2To10::calculateGlobalLowerBound(const QList<uint> &allJobs)
     }
 
     //global lower 1 - calculation
-    perfectSplit[0] = 0;
-    perfectSplit[K_UPPER+1] = QT_MAX_UINT;
-    for (int i = K_UPPER; i >= 1; --i) {
-        perfectSplit[i] = qMin(perfectSplit[i+1], uint(qCeil(double(i) + double(sumAllJobs) / double(i))));
-    }
+    perfectSplit = double(numberOfMachines) + double(sumAllJobs) / double(numberOfMachines);
+
 
     //global lower 2 - add at least 1 machine
     //Jobs are sorted
@@ -196,16 +208,13 @@ void BandBK2To10::calculateGlobalLowerBound(const QList<uint> &allJobs)
 
     //global lower 3 - calculation
     //Jobs are sorted
-    pigeonholePrinciple[0] = 0;
-    pigeonholePrinciple[K_UPPER+1] = QT_MAX_UINT;
-    for (int i = K_UPPER; i > 0; --i) {
-        uint w = qCeil(double(allJobs.size()) / double(i));
-        uint globalLower3(0);
-        for (uint j = 0; j < w; ++j) {
-            globalLower3 += allJobs[allJobs.size() - j - 1];
-        }
-        pigeonholePrinciple[i] = qMin(globalLower3 + i, pigeonholePrinciple[i+1]);
+
+    uint w = qCeil(double(allJobs.size()) / double(numberOfMachines));
+    uint globalLower3(0);
+    for (uint j = 0; j < w; ++j) {
+        globalLower3 += allJobs[allJobs.size() - j - 1];
     }
+    pigeonholePrinciple = globalLower3 + numberOfMachines;
     return;
 }
 
@@ -217,16 +226,11 @@ void BandBK2To10::runBnbRec(Node *parentNode, uint depth)
         QString spaces(""); for(uint i=0; i<depth ; ++i){ spaces.append("  "); }
         cout2 << qPrintable("\n" + spaces + "*New Sub Tree Parent- depth=" + QString::number(depth)) <<parentNode->toString() <<QString("current active(job=%1)").arg(job) ;
     }
-    for(int i=0; i < qMin(parentNode->machines.size()+1, K_UPPER); ++i){
+    for(int i=0; i < numberOfMachines; ++i){
         Node* sonI =  new Node(parentNode->machines, parentNode->jobsLeft);
-        if(parentNode->machines.size() -1 >= i){
-            sonI->machines[i].push_back(job);
-        }
-        else{
-            QList<uint> newMachine;
-            newMachine.push_back(job);
-            sonI->machines.push_back(newMachine);
-        }
+        QList<uint> newMachine;
+        newMachine.push_back(job);
+        sonI->machines.push_back(newMachine);
         calcLowerBound(sonI);
         calcUpperBoundAndCheckBest(sonI);
         if(DEBUGLEVEL == 2) {

@@ -89,19 +89,21 @@ class BandBK2To10
 {
 public:
     BandBK2To10(QList<uint> allJobs);
+    BandBK2To10(QList<uint> allJobs, int _numberOfMachines);
     Node *initializeRoot(const QList<uint>& allJobs);
     void calcLowerBound(Node* node) const;
-    uint getGlobalLowerByMachinesSize(uint machinesSize) const;
+    uint getGlobalLowerByMachinesSize() const;
     void calcUpperBoundAndCheckBest(Node* node);
     void calculateGlobalLowerBound(const QList<uint>& allJobs);
     void runBnbRec(Node* node, uint depth);
     uint getJob();
-    uint perfectSplit[K_UPPER+1];//global lower 1
+    uint perfectSplit;//global lower 1
     uint pMax;//global lower 2
-    uint pigeonholePrinciple[K_UPPER];//global lower 3
+    uint pigeonholePrinciple;//global lower 3
     QList<Node*> activeNodes;
     QPair<double, QList<QList<uint>>> bestSolutionFound;
     QMap<uint,uint> cutOffHist;
+    int numberOfMachines;
 };
 
 #endif // BANDBK2TO10_H

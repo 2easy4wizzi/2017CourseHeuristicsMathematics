@@ -217,7 +217,7 @@ void LocalK2To10::printSol(const QString& name,const QPair<double, QList<QList<u
         machinesContent += ")\n ";
     }
     machinesContent = machinesContent.mid(0,machinesContent.size()-2);
-    cout << qPrintable(QString("      machines content:\n %1").arg(machinesContent));
+//    cout << qPrintable(QString("      machines content:\n %1").arg(machinesContent));
 }
 
 QPair<double, QList<QList<uint> > > LocalK2To10::runLocalSearch(QPair<double, QList<QList<uint> > > bestGlobalSol)
@@ -467,7 +467,7 @@ QPair<double, QList<QList<uint> > > LocalK2To10::move3jobs(const QPair<double, Q
 }
 
 QPair<double, QList<QList<uint>>> LocalK2To10::swap1for1(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt) {
-
+    QList<uint> summedMachineCopy = summedMachinesGlobal;
     if(DEBUGLEVELLOCAL >= 3) cout << qPrintable(QString(__FUNCTION__));
     QPair<double, QList<QList<uint>>> bestLocalSol = bestGlobalSol;
     QList<QList<uint>> machines = bestLocalSol.second;
@@ -486,6 +486,34 @@ QPair<double, QList<QList<uint>>> LocalK2To10::swap1for1(const QPair<double, QLi
                     machines[i][j] = jobOnHand2;
                     machines[l][k] = jobOnHand1;
                     double tf ( targetFunction(machines) );
+
+
+//                    summedMachineCopy[i] = summedMachineCopy[i] - jobOnHand1 + jobOnHand2;
+//                    summedMachineCopy[l] = summedMachineCopy[l] - jobOnHand2 + jobOnHand1;
+//                    //MSE
+//                    double mse = calcMse(summedMachineCopy);
+
+//                    QPair<double, QList<QList<uint> > > tempCurrentState;
+//                    tempCurrentState.first = tf; tempCurrentState.second = machines;
+//                    if( tf < bestLocalSol.first && mse < mseGlobal) {
+//                        mseGlobal = mse;
+//                        bestLocalSol = tempCurrentState;
+//                        if(!opt) return tempCurrentState;
+//                    }
+//                    else if( tf < bestLocalSol.first) {
+//                        mseGlobal = mse;
+//                        bestLocalSol = tempCurrentState;
+//                        if(!opt) return tempCurrentState;
+//                    }
+//                    else if(tf == bestLocalSol.first && mse < mseGlobal) {
+//                        mseGlobal = mse;
+//                        bestLocalSol = tempCurrentState;
+//                        if(!opt) return tempCurrentState;
+//                    }
+
+//                    summedMachineCopy[i] = summedMachineCopy[i] - jobOnHand2 + jobOnHand1;
+//                    summedMachineCopy[l] = summedMachineCopy[l] - jobOnHand1 + jobOnHand2;
+
                     if( tf < bestLocalSol.first){
                         bestLocalSol.first = tf;
                         bestLocalSol.second = machines;
