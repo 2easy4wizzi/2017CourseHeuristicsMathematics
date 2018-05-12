@@ -8,7 +8,7 @@
 #define INF 10000000000
 #define QT_MAX_UINT 2000000000
 //0 for nothing, 1 for minimum, 2 for medium, 3 for maximum
-#define DEBUGLEVELLOCAL 0
+#define DEBUGLEVELLOCAL 1
 #define K_UPPER 10
 #define MACHINES_NUMBER 5
 

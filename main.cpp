@@ -18,6 +18,7 @@ const QList<uint> getInputFromFile(QPair<QString,QString> inputToSol, double& tf
 QList<uint> parseFiles(QPair<QString,QString> inputToSol, double& tf, int &numberOfMachines);
 void runLocalSearch(QList<QPair<QString,QString>> inputToSol);
 QList<QPair<QString,QString>> getInputByDemand(QString dist, int range, int jobs, int numMachines, QList<QPair<QString, QString> > inputToSol);
+QList<QPair<QString,QString>> getInputByNames(QStringList names, QList<QPair<QString, QString>> inputToSol);
 
 int main(int argc, char *argv[])
 {
@@ -25,12 +26,26 @@ int main(int argc, char *argv[])
     Q_UNUSED(argv);
 
     QList<QPair<QString,QString>> inputToSol = getAllTestsNames();
-    QList<QPair<QString,QString>> filteredInputToSol1000 = getInputByDemand("U", 1, 1000, -1, inputToSol);
+//    QList<QPair<QString,QString>> filteredInputToSol1000 = getInputByDemand("U", 1, 1000, -1, inputToSol);
 //    runLocalSearch(filteredInputToSol1000);
-    QList<QPair<QString,QString>> filteredInputToSol = getInputByDemand("U", 1, -1, -1, inputToSol);
+//    QList<QPair<QString,QString>> filteredInputToSol = getInputByDemand("U", 1, -1, -1, inputToSol);
+//    QStringList names = (QStringList() << "U_1_0050_25_3.txt" << "U_1_0100_25_5.txt" <<  "U_1_0100_25_9.txt");
+    QStringList names = (QStringList() << "U_1_0050_25_3.txt" );
+    QList<QPair<QString,QString>> filteredInputToSol = getInputByNames(names, inputToSol);
     runLocalSearch(filteredInputToSol);
-    //TODO add MSE to other steps
     return 0;
+}
+
+QList<QPair<QString,QString>> getInputByNames(QStringList names, QList<QPair<QString, QString> > inputToSol){
+    QList<QPair<QString,QString>> newInputs;
+    for(QPair<QString,QString> p : inputToSol){
+        QString baseName = p.first.split("/").back();
+        if(names.contains(baseName)){
+            newInputs.push_back(p);
+        }
+    }
+    cout << newInputs;
+    return newInputs;
 }
 
 QList<QPair<QString,QString>> getInputByDemand(QString dist, int range, int jobs, int numMachines, QList<QPair<QString,QString>> inputToSol){
@@ -72,8 +87,10 @@ void runLocalSearch(QList<QPair<QString,QString>> inputToSol){
         const QList<uint> allJobs = getInputFromFile(inputToSolPair, tf, numberOfMachines); //getting jobs from input file, printing data from files(input and sol file) and taking the upperBound as targer function(tf)
         LocalK2To10* local = new LocalK2To10(allJobs, numberOfMachines);
         cout << "----Our Results-------";
+
         local->printSol("best from Our local search",local->bestGlobalSolution);
-        cout << QString("\n----Comparison for the %1 example----").arg(i);
+
+        cout << QString("----Comparison for the %1 example----").arg(i);
         cout << QString("***tf from benchmark was %1(we added the number of machines) and target function from our local search is %2").arg(tf).arg(local->bestGlobalSolution.first);
         if(tf == local->bestGlobalSolution.first){
             good[allJobs.size()]++;
