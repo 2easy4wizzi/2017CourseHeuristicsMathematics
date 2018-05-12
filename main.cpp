@@ -29,8 +29,8 @@ int main(int argc, char *argv[])
 //    QList<QPair<QString,QString>> filteredInputToSol1000 = getInputByDemand("U", 1, 1000, -1, inputToSol);
 //    runLocalSearch(filteredInputToSol1000);
 //    QList<QPair<QString,QString>> filteredInputToSol = getInputByDemand("U", 1, -1, -1, inputToSol);
-//    QStringList names = (QStringList() << "U_1_0050_25_3.txt" << "U_1_0100_25_5.txt" <<  "U_1_0100_25_9.txt");
-    QStringList names = (QStringList() << "U_1_0050_25_3.txt" );
+    QStringList names = (QStringList() << "U_1_0050_25_3.txt" << "U_1_0100_25_5.txt" <<  "U_1_0100_25_9.txt");
+//    QStringList names = (QStringList() << "U_1_0050_25_3.txt" );
     QList<QPair<QString,QString>> filteredInputToSol = getInputByNames(names, inputToSol);
     runLocalSearch(filteredInputToSol);
     return 0;
