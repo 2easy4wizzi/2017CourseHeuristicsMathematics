@@ -8,7 +8,7 @@
 #define INF 10000000000
 #define QT_MAX_UINT 2000000000
 //0 for nothing, 1 for minimum, 2 for medium, 3 for maximum
-#define DEBUGLEVELLOCAL 1
+#define DEBUGLEVELLOCAL 3
 #define K_UPPER 10
 #define MACHINES_NUMBER 5
 
@@ -27,10 +27,10 @@ public:
     QPair<double, QList<QList<uint>>> doAllSearchSteps(const QPair<double, QList<QList<uint>>> bestGlobalSol);
 
     QPair<double, QList<QList<uint>>> move1jobsOptimal(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt = false);
-    QPair<double, QList<QList<uint>>> move2jobsOptimal(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt = false);
+    QPair<double, QList<QList<uint>>> move2jobs(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt = false);
     QPair<double, QList<QList<uint>>> move3jobs(const QPair<double, QList<QList<uint>>> bestGlobalSol , bool opt = false);
 
-    QPair<double, QList<QList<uint>>> swap1for1(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt = false);
+    QPair<double, QList<QList<uint>>> swap1for1Optimal(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt = false);
     QPair<double, QList<QList<uint>>> swap2for1(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt = false);
     QPair<double, QList<QList<uint>>> swap2for2(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt = false);
     QPair<double, QList<QList<uint>>> swap3for3(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt = false);
