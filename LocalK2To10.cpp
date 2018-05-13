@@ -17,46 +17,37 @@ QPair<double, QList<QList<uint>>> LocalK2To10::runUsingStartAlg(QPair<double, QL
     }
 }
 
-LocalK2To10::LocalK2To10(QList<uint> allJobs, int _numberOfMachines):numberOfMachines(_numberOfMachines)
+QPair<double, QList<QList<uint>>> bestGlobalSolution;
+QList<uint> summedMachinesGlobal;
+double mseGlobal;
+double mseGlobalBack;
+double globalLowerBound;
+int numberOfMachines;
+
+LocalK2To10::LocalK2To10(QList<uint> allJobs, int _numberOfMachines, QStringList startingAlgs):
+     mseGlobal(0), mseGlobalBack(0), globalLowerBound(0), numberOfMachines(_numberOfMachines)
 {
+    bestGlobalSolution.first = 0;
     if(!allJobs.isEmpty()){
-
+        QPair<double, QString> winnerSol; winnerSol.first=INF;
         QTime timer; timer.start();//time
-        QPair<double, QList<QList<uint>>> startSol;
+        for(QString startAlg : startingAlgs){
 
-        globalLowerBound = getLowerBound(numberOfMachines, allJobs);
-        if(DEBUGLEVELLOCAL >= 2) cout << "numberOfMachines:" << numberOfMachines << "; lower bound:" << globalLowerBound;
+            globalLowerBound = getLowerBound(numberOfMachines, allJobs);
+            if(DEBUGLEVELLOCAL >= 2) cout << "numberOfMachines:" << numberOfMachines << "; lower bound:" << globalLowerBound;
 
-        startSol = initFirstSol(allJobs, numberOfMachines, "LPT");//init using numberOfMachines as global var
-        if(DEBUGLEVELLOCAL >= 1) {printSol("Start   LPT", startSol);}
-        QPair<double, QList<QList<uint>>> bestLptFound = runUsingStartAlg(startSol);
-        if(DEBUGLEVELLOCAL >= 1) {printSol(QString("END   -------- bestSolutionFound for alg LPT"), (bestLptFound)); cout<<"";}
+            QPair<double, QList<QList<uint>>> startSol = initFirstSol(allJobs, numberOfMachines, startAlg);//init using numberOfMachines as global var
+            if(DEBUGLEVELLOCAL >= 1) {printSol(QString("Start   %1").arg(startAlg), startSol);}
+            QPair<double, QList<QList<uint>>> bestLocalFound = runUsingStartAlg(startSol);
+            if(DEBUGLEVELLOCAL >= 1) {printSol(QString("END   -------- bestSolutionFound for alg %1").arg(startAlg), (bestLocalFound)); cout<<"";}
 
-        startSol = initFirstSol(allJobs, numberOfMachines, "BESTFIT");//init using numberOfMachines as global var
-        if(DEBUGLEVELLOCAL >= 1) {printSol("Start   BESTFIT", startSol);}
-        QPair<double, QList<QList<uint>>> bestBestFitFound = runUsingStartAlg(startSol);
-        if(DEBUGLEVELLOCAL >= 1) {printSol(QString("END   -------- bestSolutionFound for alg BESTFIT"), (bestBestFitFound)); cout<<"";}
-//QPair<double, QList<QList<uint>>> bestBestFitFound; bestBestFitFound.first = INF;
-        startSol = initFirstSol(allJobs, numberOfMachines, "SameMachine");//init using numberOfMachines as global var
-        if(DEBUGLEVELLOCAL >= 1) {printSol("Start   SameMachine", startSol);}
-        QPair<double, QList<QList<uint>>> bestSameMFound = runUsingStartAlg(startSol);
-        if(DEBUGLEVELLOCAL >= 1) {printSol(QString("END   -------- bestSolutionFound for alg SameMachine"), (bestSameMFound)); cout<<"";}
-//QPair<double, QList<QList<uint>>> bestSameMFound; bestSameMFound.first = INF;
-        QString algWinnerName;
-        double min(qMin(bestLptFound.first, qMin(bestBestFitFound.first, bestSameMFound.first)));
-        if( min == bestLptFound.first){
-            algWinnerName = "LPT";
-            bestGlobalSolution = bestLptFound;
+            if(bestLocalFound.first < winnerSol.first){
+                winnerSol.first = bestLocalFound.first;
+                winnerSol.second = startAlg;
+                bestGlobalSolution = bestLocalFound;
+            }
         }
-        else if(min == bestBestFitFound.first ){
-            algWinnerName = "BESTFIT";
-            bestGlobalSolution = bestBestFitFound;
-        }
-        else{
-            algWinnerName = "SameMachine";
-            bestGlobalSolution = bestSameMFound;
-        }
-        if(DEBUGLEVELLOCAL >= 1) printSol(QString("END; WINNING RESULT:::::: bestSolutionFound for start alg %1").arg(algWinnerName), bestGlobalSolution); cout<<"";
+        if(DEBUGLEVELLOCAL >= 1) printSol(QString("END; WINNING RESULT:::::: bestSolutionFound for start alg %1").arg(winnerSol.second), bestGlobalSolution); cout<<"";
         if(DEBUGLEVELLOCAL >= 1) cout << "Run time: " << (double(timer.elapsed()) / 1000) << "seconds";
     }
 }
@@ -218,7 +209,7 @@ QPair<double, QList<QList<uint> > > LocalK2To10::runSameMachine(QList<uint> allJ
 void LocalK2To10::printSol(const QString& name,const QPair<double, QList<QList<uint> > > sol)
 {
     cout << qPrintable(QString("   %1 found:").arg(name));
-    cout << qPrintable(QString("      target function = %1, num of machines=%2, lms=%3").arg(sol.first).arg(sol.second.size()).arg(mseGlobal));
+    cout << qPrintable(QString("      target function = %1, num of machines=%2, square root lms=%3").arg(sol.first).arg(sol.second.size()).arg(sqrt(mseGlobal)));
     uint i(0);
     QString machinesContent;
     for(const QList<uint>& m : sol.second){
@@ -535,6 +526,7 @@ QPair<double, QList<QList<uint>>> LocalK2To10::swap1for1(const QPair<double, QLi
 
 QPair<double, QList<QList<uint> > > LocalK2To10::swap2for1(const QPair<double, QList<QList<uint> > > bestGlobalSol, bool opt)
 {
+
     if(DEBUGLEVELLOCAL >= 3) cout << qPrintable(QString(__FUNCTION__));
     QPair<double, QList<QList<uint>>> bestLocalSol = bestGlobalSol;
     QList<QList<uint>> machines = bestLocalSol.second;
@@ -560,6 +552,8 @@ QPair<double, QList<QList<uint> > > LocalK2To10::swap2for1(const QPair<double, Q
                         machines[i][r] = jobOnHand3;
                         machines[l][k] = jobOnHand1 + jobOnHand2;
                         double tf ( targetFunction(machines) );
+
+
                         if( tf < bestLocalSol.first){
                             bestLocalSol.first = tf;
                             machines[i].takeAt(j);

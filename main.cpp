@@ -29,8 +29,8 @@ int main(int argc, char *argv[])
 //    QList<QPair<QString,QString>> filteredInputToSol1000 = getInputByDemand("U", 1, 1000, -1, inputToSol);
 //    runLocalSearch(filteredInputToSol1000);
 //    QList<QPair<QString,QString>> filteredInputToSol = getInputByDemand("U", 1, -1, -1, inputToSol);
-    QStringList names = (QStringList() << "U_1_0050_25_3.txt" << "U_1_0100_25_5.txt" <<  "U_1_0100_25_9.txt");
-//    QStringList names = (QStringList() << "U_1_0050_25_3.txt" );
+//    QStringList names = (QStringList() << "U_1_0050_25_3.txt" << "U_1_0100_25_5.txt" <<  "U_1_0100_25_9.txt");
+    QStringList names = (QStringList() << "U_1_0100_25_9.txt" );
     QList<QPair<QString,QString>> filteredInputToSol = getInputByNames(names, inputToSol);
     runLocalSearch(filteredInputToSol);
     return 0;
@@ -77,7 +77,7 @@ void runLocalSearch(QList<QPair<QString,QString>> inputToSol){
     QMap<int,int> good;
     QMap<int,int> bad;
     double std(0);
-
+    QTime timerTotal; timerTotal.start();
     for (int i = 0; i < inputToSol.size(); ++i) {
         cout << QString("--------------------START %1 from %2--------------------------------").arg(i+1).arg(inputToSol.size());
         QTime timer; timer.start();
@@ -85,7 +85,9 @@ void runLocalSearch(QList<QPair<QString,QString>> inputToSol){
         cout << QString("input file number %1: inputName=%2 and solutionName=%3").arg(i+1).arg(inputToSolPair.first).arg(inputToSolPair.second);
         double tf(0); int numberOfMachines(0);
         const QList<uint> allJobs = getInputFromFile(inputToSolPair, tf, numberOfMachines); //getting jobs from input file, printing data from files(input and sol file) and taking the upperBound as targer function(tf)
-        LocalK2To10* local = new LocalK2To10(allJobs, numberOfMachines);
+//        QStringList startingAlgs = (QStringList() << "LPT" << "BESTFIT" << "SameMachine");
+        QStringList startingAlgs = (QStringList() <<  "SameMachine");
+        LocalK2To10* local = new LocalK2To10(allJobs, numberOfMachines, startingAlgs);
         cout << "----Our Results-------";
 
         local->printSol("best from Our local search",local->bestGlobalSolution);
@@ -108,6 +110,7 @@ void runLocalSearch(QList<QPair<QString,QString>> inputToSol){
     cout << QString("Correct  (size-numberCorrect):") << good;
     cout << QString("Mistakes(size-numberMistakes):") << bad;
     cout << QString("Total Avegare error: %1").arg(std/inputToSol.size());
+    cout << QString("Total time: %1 seconds").arg((double(timerTotal.elapsed()) / 1000));
 }
 
 
