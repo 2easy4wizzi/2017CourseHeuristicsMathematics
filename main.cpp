@@ -86,7 +86,7 @@ void runLocalSearch(QList<QPair<QString,QString>> inputToSol){
         double tf(0); int numberOfMachines(0);
         const QList<uint> allJobs = getInputFromFile(inputToSolPair, tf, numberOfMachines); //getting jobs from input file, printing data from files(input and sol file) and taking the upperBound as targer function(tf)
 //        QStringList startingAlgs = (QStringList() << "LPT" << "BESTFIT" << "SameMachine");
-        QStringList startingAlgs = (QStringList() <<  "SameMachine");
+        QStringList startingAlgs = (QStringList() <<  "LPT");
         LocalK2To10* local = new LocalK2To10(allJobs, numberOfMachines, startingAlgs);
         cout << "----Our Results-------";
 
