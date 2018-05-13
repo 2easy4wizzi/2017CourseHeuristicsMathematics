@@ -31,10 +31,10 @@ LocalK2To10::LocalK2To10(QList<uint> allJobs, int _numberOfMachines, QStringList
     if(!allJobs.isEmpty()){
         QPair<double, QString> winnerSol; winnerSol.first=INF;
         QTime timer; timer.start();//time
-        for(QString startAlg : startingAlgs){
+        globalLowerBound = getLowerBound(numberOfMachines, allJobs);
+        if(DEBUGLEVELLOCAL >= 2) cout << "numberOfMachines:" << numberOfMachines << "; lower bound:" << globalLowerBound;
 
-            globalLowerBound = getLowerBound(numberOfMachines, allJobs);
-            if(DEBUGLEVELLOCAL >= 2) cout << "numberOfMachines:" << numberOfMachines << "; lower bound:" << globalLowerBound;
+        for(QString startAlg : startingAlgs){
 
             QPair<double, QList<QList<uint>>> startSol = initFirstSol(allJobs, numberOfMachines, startAlg);//init using numberOfMachines as global var
             if(DEBUGLEVELLOCAL >= 1) {printSol(QString("Start   %1").arg(startAlg), startSol);}
@@ -45,6 +45,9 @@ LocalK2To10::LocalK2To10(QList<uint> allJobs, int _numberOfMachines, QStringList
                 winnerSol.first = bestLocalFound.first;
                 winnerSol.second = startAlg;
                 bestGlobalSolution = bestLocalFound;
+            }
+            if(bestLocalFound.first <= globalLowerBound){//found opt
+                break;
             }
         }
         if(DEBUGLEVELLOCAL >= 1) printSol(QString("END; WINNING RESULT:::::: bestSolutionFound for start alg %1").arg(winnerSol.second), bestGlobalSolution); cout<<"";
