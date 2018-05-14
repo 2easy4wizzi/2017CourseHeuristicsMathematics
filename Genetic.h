@@ -16,6 +16,7 @@ public:
     /*Members*/
     QList<uint> content;
     double targetFunctionValue;
+    const QString& toString();
 };
 
 
@@ -44,11 +45,17 @@ public:
 
     /*Aux Function*/
     float calcFitness(const Gene& gene);
+    const QString& toString();
 
     /*Members*/
     QList<Gene> currentGen;
     QList<Gene> nextGen;
     Gene fittestGene;
+    const uint populationSize;
+    const uint generationsNumber;
+    const uint machinesNumber;
+    const QList<uint> allJobs;
+    const uint debugLevel;
 };
 
 #endif // GENETIC_H

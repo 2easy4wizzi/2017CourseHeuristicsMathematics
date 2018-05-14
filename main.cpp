@@ -42,8 +42,8 @@ int main(int argc, char *argv[])
 //    runBNB(namedTasksBnb);
 
     //by hardcode manual input
-    QStringList namesBnb = (QStringList() << "U_5_0020_05_0.txt");
-    QList<QPair<QString,QString>> costumTasksBnb = getInputByNames(namesBnb, inputToSol);
+
+    QList<QPair<QString,QString>> costumTasksBnb = getInputByDemand("U", 5, -1, -1, inputToSol);
     cout << costumTasksBnb;
     runBNB(costumTasksBnb);
 
