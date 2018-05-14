@@ -8,7 +8,16 @@
 #define INF 10000000000
 #define QT_MAX_UINT 2000000000
 
-class Gene;
+/*Q_OBJECT*/
+class Gene {
+public:
+    Gene() {}
+    Gene(QList<uint> _content);
+    /*Members*/
+    QList<uint> content;
+    double targetFunctionValue;
+};
+
 
 class Genetic
 {
@@ -29,7 +38,7 @@ public:
 
     Gene selectGeneByFitness(const QMap<Gene, float>& genesToProb);
 
-    QPair<Gene, Gene> crossOver(const Gene& g1, const Gene& g1);
+    QPair<Gene, Gene> crossOver(const Gene& g1, const Gene& g2);
 
     Gene mutate(const Gene& g);
 
@@ -40,14 +49,6 @@ public:
     QList<Gene> currentGen;
     QList<Gene> nextGen;
     Gene fittestGene;
-};
-
-/*Q_OBJECT*/
-class Gene {
-    Gene(QList<uint> _content);
-    /*Members*/
-    QList<uint> content;
-    double targetFunctionValue;
 };
 
 #endif // GENETIC_H
