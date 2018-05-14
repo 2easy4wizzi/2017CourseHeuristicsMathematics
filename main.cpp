@@ -14,25 +14,51 @@ QList<uint> shuffleMyQLIST(QList<uint> &input3rand);
 uint getRandNumber(uint low, uint high );
 void runOnAllFolder();
 QList<QPair<QString, QString> > getAllTestsNames();
-const QList<uint> getInputFromFile(QPair<QString,QString> inputToSol, double& tf, int& numberOfMachines);
-QList<uint> parseFiles(QPair<QString,QString> inputToSol, double& tf, int &numberOfMachines);
+const QList<uint> getInputFromFile(QPair<QString,QString> inputToSol, double& tf, int& numberOfMachines, double &globalLowerBound);
+QList<uint> parseFiles(QPair<QString,QString> inputToSol, double& tf, int &numberOfMachines, double &globalLowerBound);
 void runLocalSearch(QList<QPair<QString,QString>> inputToSol);
 QList<QPair<QString,QString>> getInputByDemand(QString dist, int range, int jobs, int numMachines, QList<QPair<QString, QString> > inputToSol);
 QList<QPair<QString,QString>> getInputByNames(QStringList names, QList<QPair<QString, QString>> inputToSol);
+void runBNB(QList<QPair<QString,QString>> inputToSol);
 
 int main(int argc, char *argv[])
 {
     Q_UNUSED(argc);
     Q_UNUSED(argv);
-
     QList<QPair<QString,QString>> inputToSol = getAllTestsNames();
-//    QList<QPair<QString,QString>> filteredInputToSol1000 = getInputByDemand("U", 1, 1000, -1, inputToSol);
-//    runLocalSearch(filteredInputToSol1000);
-//    QList<QPair<QString,QString>> filteredInputToSol = getInputByDemand("U", 1, -1, -1, inputToSol);
-//    QStringList names = (QStringList() << "U_1_0050_25_3.txt" << "U_1_0100_25_5.txt" <<  "U_1_0100_25_9.txt");
-    QStringList names = (QStringList() << "U_1_0100_25_9.txt" );
-    QList<QPair<QString,QString>> filteredInputToSol = getInputByNames(names, inputToSol);
-    runLocalSearch(filteredInputToSol);
+
+/*bnb*/
+//    //all 10 jobs tasks
+//    QList<QPair<QString,QString>> all10Jobs = getInputByDemand("", -1, 10, -1, inputToSol);
+//    runBNB(all10Jobs);
+
+//    //all Uniform 50 jobs tasks
+//    QList<QPair<QString,QString>> all50Jobs = getInputByDemand("U", -1, 50, -1, inputToSol);
+//    runBNB(all50Jobs);
+
+//    //by hardcode name
+//    QStringList namesBnb = (QStringList() << "U_1_0050_05_0.txt");
+//    QList<QPair<QString,QString>> namedTasksBnb = getInputByNames(namesBnb, inputToSol);
+//    runBNB(namedTasksBnb);
+
+/*local*/
+//    //all Uniform - 130
+//    QList<QPair<QString,QString>> uniformTasksLocal = getInputByDemand("U", 1, -1, -1, inputToSol);
+//    runLocalSearch(uniformTasksLocal);
+
+    //all NON-Uniform - 130
+    QList<QPair<QString,QString>> nonUniformsTasksLocal = getInputByDemand("NU", 1, 1000, -1, inputToSol);
+    cout << nonUniformsTasksLocal;
+    runLocalSearch(nonUniformsTasksLocal);
+
+//    //by hardcode name
+//    QStringList namesLocal = (QStringList() << "NU_1_0500_25_3.txt");
+//    QList<QPair<QString,QString>> namedTasksLocal = getInputByNames(namesLocal, inputToSol);
+//    runLocalSearch(namedTasksLocal);
+
+
+
+
     return 0;
 }
 
@@ -44,7 +70,7 @@ QList<QPair<QString,QString>> getInputByNames(QStringList names, QList<QPair<QSt
             newInputs.push_back(p);
         }
     }
-    cout << newInputs;
+//    cout << newInputs;
     return newInputs;
 }
 
@@ -69,9 +95,46 @@ QList<QPair<QString,QString>> getInputByDemand(QString dist, int range, int jobs
     cout << QString("number of input=%1. distribution=%2. range=%3 #jobs=%4. #machines=%5").arg(newInputs.size()).arg(dist==""?"all":dist).arg(range==-1?"all":QString("[1, %1]").arg(qPow(10,range+1))).arg(jobs==-1?"all":QString::number(jobs)).arg(numMachines==-1?"all":QString::number(numMachines));
     return newInputs;
 }
+void runBNB(QList<QPair<QString,QString>> inputToSol) {
 
-//    new LocalK2To10(getInput(31,false,1));
-//    initInputs();
+    QMap<int,int> good;
+    QMap<int,int> bad;
+    double std(0);
+    QTime timerTotal; timerTotal.start();
+    for (int i = 0; i < inputToSol.size(); ++i) {
+        cout << QString("--------------------START %1 from %2--------------------------------").arg(i+1).arg(inputToSol.size());
+        QTime timer; timer.start();
+        QPair<QString,QString> inputToSolPair = inputToSol.at(i);
+        cout << QString("input file number %1: inputName=%2 and solutionName=%3").arg(i+1).arg(inputToSolPair.first).arg(inputToSolPair.second);
+        double tf(0); int numberOfMachines(0); double u;
+        const QList<uint> allJobs = getInputFromFile(inputToSolPair, tf, numberOfMachines,u); //getting jobs from input file, printing data from files(input and sol file) and taking the upperBound as targer function(tf)
+
+        BandBK2To10* bnb = new BandBK2To10(allJobs, numberOfMachines);
+
+        cout << "----Our Results-------";
+        cout << bnb->print();
+
+        cout << QString("----Comparison for the %1 example----").arg(i);
+        cout << QString("***tf from benchmark was %1(we added the number of machines) and target function from our bnb search is %2").arg(tf).arg(bnb->bestSolutionFound.first);
+        if(tf == bnb->bestSolutionFound.first){
+            good[allJobs.size()]++;
+            cout << "***RESULT IS THE SAME";
+        }
+        else{
+            bad[allJobs.size()]++;
+            std += bnb->bestSolutionFound.first - tf;
+            cout << "***Different" << bnb->bestSolutionFound.first - tf;
+        }
+        cout << "Run time: " << (double(timer.elapsed()) / 1000) << "seconds";
+        cout << QString("Correct  (size-numberCorrect):") << good; cout << QString("Mistakes(size-numberMistakes):") << bad; cout << QString("Avegare error: %1").arg(std/i);
+        cout << QString("-----------END %1 from %2-----------------------------------------").arg(i+1).arg(inputToSol.size());
+    }
+    cout << QString("Correct  (size-numberCorrect):") << good;
+    cout << QString("Mistakes(size-numberMistakes):") << bad;
+    cout << QString("Total Avegare error: %1").arg(std/inputToSol.size());
+    cout << QString("Total time: %1 seconds").arg((double(timerTotal.elapsed()) / 1000));
+}
+
 void runLocalSearch(QList<QPair<QString,QString>> inputToSol){
 
     QMap<int,int> good;
@@ -83,11 +146,10 @@ void runLocalSearch(QList<QPair<QString,QString>> inputToSol){
         QTime timer; timer.start();
         QPair<QString,QString> inputToSolPair = inputToSol.at(i);
         cout << QString("input file number %1: inputName=%2 and solutionName=%3").arg(i+1).arg(inputToSolPair.first).arg(inputToSolPair.second);
-        double tf(0); int numberOfMachines(0);
-        const QList<uint> allJobs = getInputFromFile(inputToSolPair, tf, numberOfMachines); //getting jobs from input file, printing data from files(input and sol file) and taking the upperBound as targer function(tf)
-//        QStringList startingAlgs = (QStringList() << "LPT" << "BESTFIT" << "SameMachine");
-        QStringList startingAlgs = (QStringList() <<  "LPT");
-        LocalK2To10* local = new LocalK2To10(allJobs, numberOfMachines, startingAlgs);
+        double tf(0); int numberOfMachines(0); double globalLower(0);
+        const QList<uint> allJobs = getInputFromFile(inputToSolPair, tf, numberOfMachines, globalLower); //getting jobs from input file, printing data from files(input and sol file) and taking the upperBound as targer function(tf)
+        QStringList startingAlgs = (QStringList() << "LPT" << "BESTFIT" << "SameMachine");
+        LocalK2To10* local = new LocalK2To10(allJobs, numberOfMachines, startingAlgs, globalLower + numberOfMachines);
         cout << "----Our Results-------";
 
         local->printSol("best from Our local search",local->bestGlobalSolution);
@@ -114,7 +176,7 @@ void runLocalSearch(QList<QPair<QString,QString>> inputToSol){
 }
 
 
-QList<uint> parseFiles(QPair<QString,QString> inputToSol,double& tf, int& numberOfMachines){
+QList<uint> parseFiles(QPair<QString,QString> inputToSol,double& tf, int& numberOfMachines,double& globalLowerBound){
     QList<uint> retVal;
     QFile file(inputToSol.first);
     QFileInfo fileInfo(file.fileName());
@@ -195,6 +257,7 @@ QList<uint> parseFiles(QPair<QString,QString> inputToSol,double& tf, int& number
             }
             QString format("***SOLUTION Data from file %1: machinesNum=%2 jobsNum=%3 lowerBound=%4 upperBound=%5 isOptimal=%6");
             cout << QString(format).arg(fileNameSol).arg(machinesNumSol).arg(jobsNumSol).arg(lowerBound).arg(upperBound).arg(isOptimal);
+            globalLowerBound = upperBound;
             tf = upperBound + machinesNumSol;
             numberOfMachines = machinesNumSol;
             cout << "\tContent of machines summed" << summedMachines;
@@ -207,9 +270,9 @@ QList<uint> parseFiles(QPair<QString,QString> inputToSol,double& tf, int& number
 }
 
 
-const QList<uint> getInputFromFile(QPair<QString,QString> inputToSol, double& tf, int& numberOfMachines)
+const QList<uint> getInputFromFile(QPair<QString,QString> inputToSol, double& tf, int& numberOfMachines, double& globalLowerBound)
 {
-    QList<uint> inputReturn = parseFiles(inputToSol, tf, numberOfMachines);
+    QList<uint> inputReturn = parseFiles(inputToSol, tf, numberOfMachines, globalLowerBound);
 
 
     if(inputReturn.isEmpty()) return inputReturn;
@@ -224,7 +287,7 @@ const QList<uint> getInputFromFile(QPair<QString,QString> inputToSol, double& tf
 }
 
 QList<QPair<QString,QString>> getAllTestsNames(){
-    QMap<int,int> numberOfJobs;
+//    QMap<int,int> numberOfJobs;
     QList<QPair<QString,QString>> inputToSol;
     QDirIterator it("../h/docs/benchMark/all", QDirIterator::Subdirectories);
     while (it.hasNext()) {
@@ -237,7 +300,7 @@ QList<QPair<QString,QString>> getAllTestsNames(){
             QString fullPathToSolFile = QString("%1%2%3").arg(fileInfo.dir().absolutePath()).arg("/SOL_").arg(solFileNameFormat);
             QFileInfo check_file(fullPathToSolFile);
             if (check_file.exists() && check_file.isFile()) {
-                QString s = fileNameList.at(2); numberOfJobs[s.toInt()]++; //just to count
+//                QString s = fileNameList.at(2); numberOfJobs[s.toInt()]++; //just to count
                 QFile fileSol(fullPathToSolFile);
                 QFileInfo fileInfoSol(fileSol.fileName());
                 QString fileNameSol(fileInfoSol.fileName());
@@ -248,10 +311,8 @@ QList<QPair<QString,QString>> getAllTestsNames(){
             }
 
         }
-//        static int j=0;
-//        if(++j == 5) break;
     }
-    cout << "number of jobs to how many files have this jobs. for example (10,12) means 12 files have 10 jobs tasks\n" <<numberOfJobs;
+//    cout << "number of jobs to how many files have this jobs. for example (10,12) means 12 files have 10 jobs tasks\n" <<numberOfJobs;
     return inputToSol;
 }
 

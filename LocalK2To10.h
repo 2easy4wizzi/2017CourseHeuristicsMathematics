@@ -8,14 +8,14 @@
 #define INF 10000000000
 #define QT_MAX_UINT 2000000000
 //0 for nothing, 1 for minimum, 2 for medium, 3 for maximum
-#define DEBUGLEVELLOCAL 3
+#define DEBUGLEVELLOCAL 0
 #define K_UPPER 10
 #define MACHINES_NUMBER 5
 
 class LocalK2To10
 {
 public:
-    LocalK2To10(QList<uint> allJobs, int _numberOfMachines, QStringList startingAlgs);
+    LocalK2To10(QList<uint> allJobs, int _numberOfMachines, QStringList startingAlgs, double _globalLowerBound);
     /*init*/
     QPair<double, QList<QList<uint>>> initFirstSol(QList<uint> allJobs, int numberOfMachines, QString startSolAlg);
     QPair<double, QList<QList<uint>>> runLpt(QList<uint> allJobs, int numberOfMachines);

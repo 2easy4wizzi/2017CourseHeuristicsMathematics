@@ -9,7 +9,7 @@
 #define cout2 qDebug()
 #define INF 10000000000
 #define QT_MAX_UINT 2000000000
-#define DEBUGLEVEL 1 //0 for nothing, 1 for minimum, 2 for all
+#define DEBUGLEVEL 0 //0 for nothing, 1 for minimum, 2 for all
 #define K_UPPER 10
 //#define K_LOWER 2
 
@@ -49,7 +49,22 @@ public:
         }
         return machineStr;
     }
+    QString endResultToString(){
+        QString machineStr("Machines:");
+        int i(0);
+        for(const QList<uint>& machine : machines){
+            if (i++) machineStr.append(",");
+            machineStr.append("<");
+            int j(1);
+            for(const uint& job: machine){
+                machineStr += (QString::number(job));
+                if (j++ != machine.size()) machineStr.append(",");
+            }
+            machineStr.append(">");
+        }
 
+        return (machineStr);
+    }
     QString toString(){
         QString up("U="  + QString::number(U));
         QString down(" L=" + QString::number(L));
@@ -104,6 +119,7 @@ public:
     QPair<double, QList<QList<uint>>> bestSolutionFound;
     QMap<uint,uint> cutOffHist;
     int numberOfMachines;
+    QString print();
 };
 
 #endif // BANDBK2TO10_H

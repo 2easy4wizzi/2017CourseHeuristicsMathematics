@@ -12,8 +12,8 @@ BandBK2To10::BandBK2To10(QList<uint> allJobs)
         runBnbRec(root, 0);
         Node* bestSol = new Node(bestSolutionFound.second, QList<uint>());
         bestSol->U = bestSolutionFound.first;
-        cout2 << "BEST FOUND: " << bestSol->leafToString();
-        cout2 << "nodes seen:" << nodesSeenSoFar << ". run time: " << (double(timer.elapsed()) / 1000) << "seconds";
+        if(DEBUGLEVEL == 1) cout2 << "BEST FOUND: " << bestSol->leafToString();
+        if(DEBUGLEVEL == 1) cout2 << "nodes seen:" << nodesSeenSoFar << ". run time: " << (double(timer.elapsed()) / 1000) << "seconds";
 //        cout2 << "cut off histogram:";
 //        uint totalCutOffs(0);
 //        for(int i=0; i<allJobs.size(); ++i){
@@ -38,8 +38,8 @@ BandBK2To10::BandBK2To10(QList<uint> allJobs, int _numberOfMachines) : numberOfM
         runBnbRec(root, 0);
         Node* bestSol = new Node(bestSolutionFound.second, QList<uint>());
         bestSol->U = bestSolutionFound.first;
-        cout2 << "BEST FOUND: " << bestSol->leafToString();
-        cout2 << "nodes seen:" << nodesSeenSoFar << ". run time: " << (double(timer.elapsed()) / 1000) << "seconds";
+        if(DEBUGLEVEL == 1) cout2 << "BEST FOUND: " << bestSol->leafToString();
+        if(DEBUGLEVEL == 1) cout2 << "nodes seen:" << nodesSeenSoFar << ". run time: " << (double(timer.elapsed()) / 1000) << "seconds";
     }
 }
 
@@ -228,9 +228,10 @@ void BandBK2To10::runBnbRec(Node *parentNode, uint depth)
     }
     for(int i=0; i < numberOfMachines; ++i){
         Node* sonI =  new Node(parentNode->machines, parentNode->jobsLeft);
-        QList<uint> newMachine;
-        newMachine.push_back(job);
-        sonI->machines.push_back(newMachine);
+//        QList<uint> newMachine;
+//        newMachine.push_back(job);
+//        sonI->machines.push_back(newMachine);
+        sonI->machines[i].push_back(job);
         calcLowerBound(sonI);
         calcUpperBoundAndCheckBest(sonI);
         if(DEBUGLEVEL == 2) {
@@ -268,4 +269,12 @@ void BandBK2To10::runBnbRec(Node *parentNode, uint depth)
         }
     }
     delete parentNode;
+}
+
+QString BandBK2To10::print()
+{
+    Node* bestSol = new Node(bestSolutionFound.second, QList<uint>());
+    QString ms = bestSol->endResultToString();
+    QString tf = QString::number(bestSolutionFound.first);
+    return QString("tf=%1. %2").arg(tf).arg(ms);
 }

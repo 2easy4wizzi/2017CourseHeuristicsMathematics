@@ -24,14 +24,14 @@ double mseGlobalBack;
 double globalLowerBound;
 int numberOfMachines;
 
-LocalK2To10::LocalK2To10(QList<uint> allJobs, int _numberOfMachines, QStringList startingAlgs):
-     mseGlobal(0), mseGlobalBack(0), globalLowerBound(0), numberOfMachines(_numberOfMachines)
+LocalK2To10::LocalK2To10(QList<uint> allJobs, int _numberOfMachines, QStringList startingAlgs, double _globalLowerBound):
+     mseGlobal(0), mseGlobalBack(INF), globalLowerBound(_globalLowerBound), numberOfMachines(_numberOfMachines)
 {
     bestGlobalSolution.first = 0;
     if(!allJobs.isEmpty()){
         QPair<double, QString> winnerSol; winnerSol.first=INF;
         QTime timer; timer.start();//time
-        globalLowerBound = getLowerBound(numberOfMachines, allJobs);
+//        globalLowerBound = getLowerBound(numberOfMachines, allJobs);
         if(DEBUGLEVELLOCAL >= 2) cout << "numberOfMachines:" << numberOfMachines << "; lower bound:" << globalLowerBound;
 
         for(QString startAlg : startingAlgs){
@@ -285,25 +285,25 @@ QPair<double, QList<QList<uint> > > LocalK2To10::doAllSearchSteps(const QPair<do
     mseGlobal = calcMse(summedMachinesGlobal);
 
     //step1
-//    bestLocalSol = move1jobsOptimal(bestGlobalSol, true);
-//    if(bestLocalSol != bestGlobalSol){
-//        return bestLocalSol;
-//    }
-//    //step2
-//    bestLocalSol = swap1for1Optimal(bestGlobalSol,true);
-//    if(bestLocalSol != bestGlobalSol){
-//        return bestLocalSol;
-//    }
-//    //step3
-//    bestLocalSol = swap2for1(bestGlobalSol,false);
-//    if(bestLocalSol != bestGlobalSol){
-//        return bestLocalSol;
-//    }
-//    //step4
-//    bestLocalSol = move2jobs(bestGlobalSol,false);
-//    if(bestLocalSol != bestGlobalSol){
-//        return bestLocalSol;
-//    }
+    bestLocalSol = move1jobsOptimal(bestGlobalSol, true);
+    if(bestLocalSol != bestGlobalSol){
+        return bestLocalSol;
+    }
+    //step2
+    bestLocalSol = swap1for1Optimal(bestGlobalSol,true);
+    if(bestLocalSol != bestGlobalSol){
+        return bestLocalSol;
+    }
+    //step3
+    bestLocalSol = swap2for1(bestGlobalSol,false);
+    if(bestLocalSol != bestGlobalSol){
+        return bestLocalSol;
+    }
+    //step4
+    bestLocalSol = move2jobs(bestGlobalSol,false);
+    if(bestLocalSol != bestGlobalSol){
+        return bestLocalSol;
+    }
     //step5
     bestLocalSol = swap2for2(bestGlobalSol,false);
     if(bestLocalSol != bestGlobalSol){
@@ -377,6 +377,7 @@ QPair<double, QList<QList<uint> > > LocalK2To10::move1jobsOptimal(const QPair<do
 
 QPair<double, QList<QList<uint> > > LocalK2To10::move2jobs(const QPair<double, QList<QList<uint> > > bestGlobalSol, bool opt)
 {
+    QList<uint> summedMachineCopy = summedMachinesGlobal;
     if(DEBUGLEVELLOCAL >= 3) cout << qPrintable(QString(__FUNCTION__))<< "sqrt(mseGlobal)" << QString::number(sqrt(mseGlobal), 'g', 15);
     QList<QList<uint>> machines = bestGlobalSol.second;
     QPair<double, QList<QList<uint> > > bestNeighborState(bestGlobalSol);
@@ -386,6 +387,7 @@ QPair<double, QList<QList<uint> > > LocalK2To10::move2jobs(const QPair<double, Q
         for(int j = 0; j < machines[i].size(); ++j) {
             uint jobOnHand = machines[i][j];
             machines[i][j] = 0;
+            summedMachineCopy[i] -= jobOnHand;
             for(int i2 = i; i2 < bestGlobalSol.second.size(); ++i2) {
                 for(int j2 = 0; j2 < machines[i2].size(); ++j2) {
                     uint jobOnHand2 = machines[i2][j2];
@@ -396,24 +398,47 @@ QPair<double, QList<QList<uint> > > LocalK2To10::move2jobs(const QPair<double, Q
                     if((j==j2 && i==i2) || sawThisJobs.contains(foursome)) continue;
                     sawThisJobs.append(foursome);
                     machines[i2][j2] = 0;
+                    summedMachineCopy[i2] -= jobOnHand2;
                     for(int k = 0; k < bestGlobalSol.second.size(); ++k) {
                         machines[k].push_back(jobOnHand);
+                        summedMachineCopy[k] += jobOnHand;
                         for(int l = 0; l < bestGlobalSol.second.size(); ++l) {
                             machines[l].push_back(jobOnHand2);
                             double tf (targetFunction(machines));
-                            if(tf < bestNeighborState.first){
+                            summedMachineCopy[l] += jobOnHand2;
+                            //MSE
+                            double mse = calcMse(summedMachineCopy);
+
+                            if( tf < bestNeighborState.first && mse < mseGlobal) {
+                                mseGlobal = mse;
+                                bestNeighborState.first = tf;
+                                bestNeighborState.second = machines;
+                                if(!opt) return bestNeighborState;
+                            }
+                            else if( tf < bestNeighborState.first) {
+                                mseGlobal = mse;
+                                bestNeighborState.first = tf;
+                                bestNeighborState.second = machines;
+                                if(!opt) return bestNeighborState;
+                            }
+                            else if(tf == bestNeighborState.first && mse < mseGlobal) {
+                                mseGlobal = mse;
                                 bestNeighborState.first = tf;
                                 bestNeighborState.second = machines;
                                 if(!opt) return bestNeighborState;
                             }
                             machines[l].pop_back();
+                            summedMachineCopy[l] -= jobOnHand2;
                         }
                         machines[k].pop_back();
+                        summedMachineCopy[k] -= jobOnHand;
                     }
                     machines[i2][j2] = jobOnHand2;
+                    summedMachineCopy[i2] += jobOnHand2;
                 }
             }
             machines[i][j] = jobOnHand;
+            summedMachineCopy[i] += jobOnHand;
         }
     }
     return bestNeighborState;
@@ -500,7 +525,7 @@ QPair<double, QList<QList<uint>>> LocalK2To10::swap1for1Optimal(const QPair<doub
                     summedMachineCopy[i] = summedMachineCopy[i] - jobOnHand1 + jobOnHand2;
                     summedMachineCopy[l] = summedMachineCopy[l] - jobOnHand2 + jobOnHand1;
                     //MSE
-                    double mse = calcMse(summedMachineCopy);
+                    double mse = 0;//calcMse(summedMachineCopy);
 
                     QPair<double, QList<QList<uint> > > tempCurrentState;
                     tempCurrentState.first = tf; tempCurrentState.second = machines;
@@ -515,9 +540,9 @@ QPair<double, QList<QList<uint>>> LocalK2To10::swap1for1Optimal(const QPair<doub
                         if(!opt) return tempCurrentState;
                     }
                     else if(tf == bestLocalSol.first && mse < mseGlobal) {
-                        mseGlobal = mse;
-                        bestLocalSol = tempCurrentState;
-                        if(!opt) return tempCurrentState;
+//                        mseGlobal = mse;
+//                        bestLocalSol = tempCurrentState;
+//                        if(!opt) return tempCurrentState;
                     }
 
                     summedMachineCopy[i] = summedMachineCopy[i] - jobOnHand2 + jobOnHand1;
@@ -565,7 +590,7 @@ QPair<double, QList<QList<uint> > > LocalK2To10::swap2for1(const QPair<double, Q
                         summedMachineCopy[i] = summedMachineCopy[i] - jobOnHand1 - jobOnHand2 + jobOnHand3;
                         summedMachineCopy[l] = summedMachineCopy[l] + jobOnHand1 + jobOnHand2 - jobOnHand3;
                         //MSE
-                        double mse = calcMse(summedMachineCopy);
+                        double mse = 0;//calcMse(summedMachineCopy);
 
                         if( tf < bestLocalSol.first && mse < mseGlobal) {
                             mseGlobal = mse;
@@ -586,13 +611,13 @@ QPair<double, QList<QList<uint> > > LocalK2To10::swap2for1(const QPair<double, Q
                             if(!opt) return bestLocalSol;
                         }
                         else if(tf == bestLocalSol.first && mse < mseGlobal) {
-                            mseGlobal = mse;
-                            bestLocalSol.first = tf;
-                            machines[i].takeAt(j);
-                            machines[l][k] = jobOnHand1;
-                            machines[l] << jobOnHand2;
-                            bestLocalSol.second = machines;
-                            if(!opt) return bestLocalSol;
+//                            mseGlobal = mse;
+//                            bestLocalSol.first = tf;
+//                            machines[i].takeAt(j);
+//                            machines[l][k] = jobOnHand1;
+//                            machines[l] << jobOnHand2;
+//                            bestLocalSol.second = machines;
+//                            if(!opt) return bestLocalSol;
                         }
 
                         machines[i][j] = jobOnHand1;
@@ -770,7 +795,7 @@ double LocalK2To10::targetFunction(QList<QList<uint>> machines) {
             }
         }
     }
-    return (machinesNumber + maximalMachineTime - emptyMachines);
+    return (machinesNumber + maximalMachineTime );
 }
 
 double LocalK2To10::calcMse(QList<uint> summedMachine)
@@ -784,34 +809,37 @@ double LocalK2To10::calcMse(QList<uint> summedMachine)
 
 double LocalK2To10::getLowerBound(int numberOfMachines,QList<uint> allJobs)
 {
-    double sumAllJobs(0);
-    for(const uint& job : allJobs){
-        sumAllJobs += job;//using in global 1
-    }
+    Q_UNUSED(numberOfMachines);
+    Q_UNUSED(allJobs);
+//    double sumAllJobs(0);
+//    for(const uint& job : allJobs){
+//        sumAllJobs += job;//using in global 1
+//    }
 
-    //global lower 1 - calculation
-    double perfectSplit = double(qCeil(double(numberOfMachines) + double(sumAllJobs) / double(numberOfMachines)));
+//    //global lower 1 - calculation
+//    double perfectSplit = double(qCeil(double(numberOfMachines) + double(sumAllJobs) / double(numberOfMachines)));
 
-    //global lower 2 - add at least 1 machine
-    //Jobs are sorted
-    double pMax = allJobs.first() + 1;
+//    //global lower 2 - add at least 1 machine
+//    //Jobs are sorted
+//    double pMax = allJobs.first() + 1;
 
-    //global lower 3 - calculation
-    //Jobs are sorted
+//    //global lower 3 - calculation
+//    //Jobs are sorted
 
-    uint w = qCeil(double(allJobs.size()) / double(numberOfMachines));
-    uint globalLower3(0);
-    for (uint j = 0; j < w; ++j) {
-        globalLower3 += allJobs[allJobs.size() - j - 1];
-    }
-    double pigeonholePrinciple = globalLower3 + numberOfMachines;
+//    uint w = qCeil(double(allJobs.size()) / double(numberOfMachines));
+//    uint globalLower3(0);
+//    for (uint j = 0; j < w; ++j) {
+//        globalLower3 += allJobs[allJobs.size() - j - 1];
+//    }
+//    double pigeonholePrinciple = globalLower3 + numberOfMachines;
 
-    if(DEBUGLEVELLOCAL >= 3) {
-        cout << "pMax: " << pMax;
-        cout << "perfectSplit: " << perfectSplit;
-        cout << "pigeonholePrinciple: " << pigeonholePrinciple;
-    }
-    return qMax(pigeonholePrinciple , qMax(perfectSplit, pMax));
+//    if(DEBUGLEVELLOCAL >= 3) {
+//        cout << "pMax: " << pMax;
+//        cout << "perfectSplit: " << perfectSplit;
+//        cout << "pigeonholePrinciple: " << pigeonholePrinciple;
+//    }
+//    return qMax(pigeonholePrinciple , qMax(perfectSplit, pMax));
+    return 0;
 }
 
 QPair<double, QList<QList<uint> > > LocalK2To10::removeZerosFromSol(QPair<double, QList<QList<uint> > > bestGlobalSol)
