@@ -35,7 +35,7 @@ LocalK2To10::LocalK2To10(QList<uint> allJobs, int _numberOfMachines, QStringList
         if(DEBUGLEVELLOCAL >= 2) cout << "numberOfMachines:" << numberOfMachines << "; lower bound:" << globalLowerBound;
 
         for(QString startAlg : startingAlgs){
-
+            cout << "startAlg" << startAlg;
             QPair<double, QList<QList<uint>>> startSol = initFirstSol(allJobs, numberOfMachines, startAlg);//init using numberOfMachines as global var
             if(DEBUGLEVELLOCAL >= 1) {printSol(QString("Start   %1").arg(startAlg), startSol);}
             QPair<double, QList<QList<uint>>> bestLocalFound = runUsingStartAlg(startSol);
@@ -230,7 +230,7 @@ void LocalK2To10::printSol(const QString& name,const QPair<double, QList<QList<u
         machinesContent += ")\n ";
     }
     machinesContent = machinesContent.mid(0,machinesContent.size()-2);
-    cout << qPrintable(QString("      machines content(number of jobs=%1):\n %2").arg(jobsNumber).arg(machinesContent));
+//    cout << qPrintable(QString("      machines content(number of jobs=%1):\n %2").arg(jobsNumber).arg(machinesContent));
 }
 
 QPair<double, QList<QList<uint> > > LocalK2To10::runLocalSearch(QPair<double, QList<QList<uint> > > bestGlobalSol)
