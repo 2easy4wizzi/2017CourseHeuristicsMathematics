@@ -41,15 +41,31 @@ int main(int argc, char *argv[])
 //    QList<QPair<QString,QString>> namedTasksBnb = getInputByNames(namesBnb, inputToSol);
 //    runBNB(namedTasksBnb);
 
+    //by hardcode manual input
+    QStringList namesBnb = (QStringList() << "U_5_0020_05_0.txt");
+    QList<QPair<QString,QString>> costumTasksBnb = getInputByNames(namesBnb, inputToSol);
+    cout << costumTasksBnb;
+    runBNB(costumTasksBnb);
+
 /*local*/
 //    //all Uniform - 130
 //    QList<QPair<QString,QString>> uniformTasksLocal = getInputByDemand("U", 1, -1, -1, inputToSol);
 //    runLocalSearch(uniformTasksLocal);
 
-    //all NON-Uniform - 130
-    QList<QPair<QString,QString>> nonUniformsTasksLocal = getInputByDemand("NU", 1, 1000, -1, inputToSol);
-    cout << nonUniformsTasksLocal;
-    runLocalSearch(nonUniformsTasksLocal);
+//    //all NON-Uniform - 130
+//    QList<QPair<QString,QString>> nonUniformsTasksLocal = getInputByDemand("NU", 1, -1, -1, inputToSol);
+//    cout << nonUniformsTasksLocal;
+//    runLocalSearch(nonUniformsTasksLocal);
+
+//    //all the rest we owe to LEA
+//    QList<QPair<QString,QString>> nonUniformsTasksLocal1000 = getInputByDemand("NU", 1, 1000, -1, inputToSol);
+////    cout << nonUniformsTasksLocal1000;
+//    QList<QPair<QString,QString>> nonUniformsTasksLocal500 = getInputByDemand("NU", 1, 500, 25, inputToSol);
+//    nonUniformsTasksLocal500.pop_front();
+//    nonUniformsTasksLocal500.pop_front();
+//    nonUniformsTasksLocal500.pop_front();
+//    QList<QPair<QString,QString>> rest = nonUniformsTasksLocal1000 + nonUniformsTasksLocal500;
+//    runLocalSearch(rest);
 
 //    //by hardcode name
 //    QStringList namesLocal = (QStringList() << "NU_1_0500_25_3.txt");
@@ -259,7 +275,7 @@ QList<uint> parseFiles(QPair<QString,QString> inputToSol,double& tf, int& number
             cout << QString(format).arg(fileNameSol).arg(machinesNumSol).arg(jobsNumSol).arg(lowerBound).arg(upperBound).arg(isOptimal);
             globalLowerBound = upperBound;
             tf = upperBound + machinesNumSol;
-            numberOfMachines = machinesNumSol;
+            numberOfMachines = machinesNum;
             cout << "\tContent of machines summed" << summedMachines;
 //            cout << "\tContent of machines" << machines;
             fileSol.close();

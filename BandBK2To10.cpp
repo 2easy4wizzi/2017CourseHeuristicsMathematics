@@ -205,16 +205,15 @@ void BandBK2To10::calculateGlobalLowerBound(const QList<uint> &allJobs)
     //Jobs are sorted
     pMax = allJobs.first() + 1;
 //    cout2 << allJobs.first()<< allJobs.first()+1 << pMax;
-
     //global lower 3 - calculation
     //Jobs are sorted
-
     uint w = qCeil(double(allJobs.size()) / double(numberOfMachines));
     uint globalLower3(0);
     for (uint j = 0; j < w; ++j) {
         globalLower3 += allJobs[allJobs.size() - j - 1];
     }
     pigeonholePrinciple = globalLower3 + numberOfMachines;
+
     return;
 }
 
