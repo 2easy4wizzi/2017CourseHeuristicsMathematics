@@ -75,8 +75,8 @@ int main(int argc, char *argv[])
 
 /*Genetic*/
     const uint& _populationSize(10);
-    const uint& _generationsNumber(1);
-    const uint& _machinesNumber(2);
+    const uint& _generationsNumber(2);
+    const uint& _machinesNumber(3);
     QList<uint> allJobs = (QList<uint>() << 1 << 2 << 5 << 6);
     const uint& _debugLevel(3);
     Genetic g(_populationSize, _generationsNumber, _machinesNumber, allJobs,_debugLevel);
@@ -400,6 +400,21 @@ void initInputs(){
 //                     <<54<<13<<69<<25<<84<<40<<96<<55<<46<<5<<61<<17<<76<<32<<91<<47<<3<<62<<53<<9<<68<<24<<83<<39<<95<<54<<10<<4<<60<<16<<75<<31<<87<<46<<2<<61<<51<<7<<67<<22<<82<<38<<94<<53<<9<<2<<58<<14<<74<<29
 //                     <<5);
     inputsMap[32] = (QList<uint>()<< 99 << 90 << 96 << 98 << 96 << 95 << 98 << 97 << 95 << 1 );
+    inputsMap[33] = (QList<uint>()<< 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2<< 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2<< 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2<< 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2 << 2);
+        inputsMap[34] = (QList<uint>() << 273);
+        for(int i = 11; i <= 60; ++i)
+            inputsMap[34] << i;
+        inputsMap[35] = (QList<uint>());
+        for(int i = 77; i <= 77 + 50 * 2; i+=2)
+            inputsMap[35] << i;
+        inputsMap[36] = (QList<uint>());
+        for(int i = 0; i <= 30; ++i)
+            inputsMap[36] << 2;
+        for(int i = 0; i <= 20; ++i)
+            inputsMap[36] << 3;
+        inputsMap[37] = (QList<uint>());
+        for(int i = 0; i <= 25; ++i)
+            inputsMap[37] << 6 << 8;
 }
 
 const QList<uint> getInput(int inputBatch, bool shouldShuffle, int sortOrder)

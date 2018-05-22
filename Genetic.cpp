@@ -3,10 +3,11 @@
 #include "Genetic.h"
 #define cout3 qDebug() << __LINE__
 Genetic::Genetic(const uint &_populationSize, const uint &_generationsNumber, const uint &_machinesNumber, const QList<uint> &_allJobs, const uint &_debugLevel)
-    :populationSize(_populationSize), generationsNumber(_generationsNumber), numberOfMachines(_machinesNumber), allJobs(_allJobs), debugLevel(_debugLevel)
+    :populationSize(_populationSize), generationsNumber(_generationsNumber), numberOfMachines(_machinesNumber), allJobs(_allJobs), debugLevel(_debugLevel), currentGenIndex(0)
 {
     initFirstGeneration();
-    //pick fittestGene
+    runGenetic();
+
 }
 
 void Genetic::initFirstGeneration()
@@ -14,10 +15,110 @@ void Genetic::initFirstGeneration()
     int specialGenes(0);//TODO LPT, BESTFIT, SAME MACHINE GENES
     for(uint i =0; i < populationSize - specialGenes; ++i) {
         Gene gene(allJobs, numberOfMachines, QString::number(i));
-//        debugPrint(gene.toString(),3);
+        if(gene.targetFunctionValue < bestGeneFound.targetFunctionValue){
+            bestGeneFound = gene;
+        }
         currentGen << gene;
     }
+    debugPrint(QString("Best gene from 1st generation: %1").arg(bestGeneFound.toString()),2);
+    debugPrint(toString(),3);
+}
 
+void Genetic::runGenetic()
+{
+    bool stop(false);
+    for(uint i=0; i<generationsNumber && !stop; ++i){
+//        stop = checkOptimumReached();//calc optimum
+        createNextGeneration();
+    }
+}
+
+void Genetic::createNextGeneration()
+{
+    QList<QPair<Gene,float>> prob = buildProbabilityMap();
+    QList<QPair<Gene, Gene>> parents = selectParents(prob);
+
+}
+
+QList<QPair<Gene,float>> Genetic::buildProbabilityMap()
+{
+    QList<QPair<Gene,float>> probabilityPairs;
+    double tfSum(0);
+
+    for( Gene g : currentGen){
+        tfSum += g.targetFunctionValue;
+    }
+
+    float totalProb(0);
+    for( Gene g : currentGen){
+        float geneFitness = 1 - (g.targetFunctionValue / tfSum);
+        totalProb+=geneFitness;
+        QPair<Gene,float> newPair;
+        newPair.first = g;
+        newPair.second = geneFitness;
+        probabilityPairs << newPair;
+    }
+
+    for(int i = 0; i < probabilityPairs.size(); ++i){
+        probabilityPairs[i].second /= totalProb;
+    }
+
+    float sum(0);
+    for(const QPair<Gene,float>& p : probabilityPairs){
+        cout << p.first.toString() << p.second;
+        sum+= p.second;
+    }
+    cout << sum;
+
+    return probabilityPairs;
+}
+
+Gene Genetic::selectGeneByFitness(const QList<QPair<Gene, float> > &genesToProb,QList<uint> percentMapping)
+{
+    cout3<<percentMapping.size();
+    for(int i=1; i<5; ++i){
+        getRandNumberG(1,percentMapping.size());
+    }
+    exit(0);
+    uint rand = getRandNumberG(1,percentMapping.size());
+    cout3 << percentMapping.size() << rand << percentMapping[rand];
+    Gene selected = genesToProb[percentMapping[rand]].first;
+    cout << selected.toString();
+    return Gene();
+}
+
+QList<QPair<Gene, Gene> > Genetic::selectParents(const QList<QPair<Gene, float> > &genesToProb)
+{
+    QList<uint> percentMapping;
+    uint precision(1000000);
+    for(int i = 0; i < genesToProb.size(); ++i){
+        int bucketSize = genesToProb[i].second * precision;
+        for(int j=0; j<bucketSize; ++j){
+            percentMapping.append(i);
+        }
+    }
+
+    QList<QPair<Gene, Gene> > parents;
+    QList<QString> elitizmOnceOnly;
+    while(uint(parents.size()) <=  populationSize/2){
+        Gene g1 = selectGeneByFitness(genesToProb,percentMapping);
+        Gene g2 = selectGeneByFitness(genesToProb,percentMapping);
+        if((g1.objectName!=g2.objectName) || (g1.objectName == g2.objectName && !elitizmOnceOnly.contains(g1.objectName))){
+            QPair<Gene, Gene> p; p.first = g1; p.second=g2;
+            parents.push_back(p);
+        }
+    }
+    return parents;
+}
+
+QString Genetic::toString()
+{
+    QString currentGenStr = QString("Generation %1:").arg(currentGenIndex);
+    for(Gene g : currentGen){
+        currentGenStr.append("\n\t");
+        currentGenStr.append(g.toString());
+    }
+    return currentGenStr;
 }
 
 void Genetic::debugPrint(QString str, uint priority)
@@ -36,11 +137,11 @@ Gene::Gene(QList<uint> _jobs, const uint &_numberOfMachines, QString _name): job
 void Gene::buildRandomGene()
 {
     for(int i = 0; i < jobs.size(); ++i) {
-        content.push_back(getRandNumber(1,numberOfMachines));
+        content.push_back(getRandNumberG(1,numberOfMachines));
     }
 }
 
-QString Gene::toString()
+QString Gene::toString() const
 {
     QString format = QString("TF: %1, #Machines: %2 Jobs: %3 Content: %4");
     format.prepend(objectName);
@@ -84,9 +185,18 @@ void Gene::getTargetFunctionValue()
     }
 }
 
-uint Gene::getRandNumber(uint low, uint high )
+uint getRandNumberG(uint low, uint high )
 {
+   static bool once(false);
+   if(!once){
+       once =true;
+//       QTime time = QTime::currentTime();
+//       qsrand((uint)time.msec());
+   }
    Sleep(100);//for rand to have different time
    qsrand(uint(QTime::currentTime().msec()));
+   float prob = (float) qrand() / (RAND_MAX+1);
+   double a = low + prob*(high-low);
+   cout3  << prob << a;
    return (qrand() % ((high + 1) - low) + low);
 }

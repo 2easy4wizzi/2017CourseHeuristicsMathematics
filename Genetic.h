@@ -8,13 +8,14 @@
 #define INF 10000000000
 #define QT_MAX_UINT 2000000000
 
-/*Q_OBJECT*/
+uint getRandNumberG(uint low, uint high);
+
 class Gene  {
 public:
-    Gene(){}
+    Gene():targetFunctionValue(INF){}
     Gene(QList<uint> _jobs, const uint& _numberOfMachines, QString _name);
     void buildRandomGene();
-    QString toString();
+    QString toString() const;
     /*Members*/
     QList<uint> content;
     QList<uint> jobs;
@@ -26,7 +27,7 @@ private:
     void getTargetFunctionValue();
 
 private:
-    uint getRandNumber(uint low, uint high);
+
 };
 
 
@@ -44,9 +45,11 @@ public:
     void createNextGeneration();
 
     /*Using currentGen to calculate probability to each gene*/
-    QMap<Gene, float> buildProbabilityMap();
+    QList<QPair<Gene, float> > buildProbabilityMap();
 
-    Gene selectGeneByFitness(const QMap<Gene, float>& genesToProb);
+    Gene selectGeneByFitness(const QList<QPair<Gene,float>>& genesToProb, QList<uint> percentMapping);
+
+    QList<QPair<Gene, Gene>> selectParents(const QList<QPair<Gene,float>>& genesToProb);
 
     QPair<Gene, Gene> crossOver(const Gene& g1, const Gene& g2);
 
@@ -60,12 +63,15 @@ public:
     /*Members*/
     QList<Gene> currentGen;
     QList<Gene> nextGen;
-    Gene fittestGene;
+    Gene bestGeneFound;
     const uint populationSize;
     const uint generationsNumber;
     const uint numberOfMachines;
     const QList<uint> allJobs;
+    /*Aux Members*/
     const uint debugLevel;
+    uint currentGenIndex;
 };
+
 
 #endif // GENETIC_H
