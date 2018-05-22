@@ -24,9 +24,10 @@ void runBNB(QList<QPair<QString,QString>> inputToSol);
 
 int main(int argc, char *argv[])
 {
+    qsrand(uint(QTime::currentTime().msec()));//keep this line to init seed for qrand()
     Q_UNUSED(argc);
     Q_UNUSED(argv);
-    QList<QPair<QString,QString>> inputToSol = getAllTestsNames();
+//    QList<QPair<QString,QString>> inputToSol = getAllTestsNames();
 
 /*bnb*/
 //    //all 10 jobs tasks
@@ -80,6 +81,19 @@ int main(int argc, char *argv[])
     QList<uint> allJobs = (QList<uint>() << 1 << 2 << 5 << 6);
     const uint& _debugLevel(3);
     Genetic g(_populationSize, _generationsNumber, _machinesNumber, allJobs,_debugLevel);
+
+
+//    uint low(1);
+//    uint high(1000000);
+//    for(int i=0; i<10; ++i){
+////        Sleep(100);//for rand to have different time
+//        float prob = (float) qrand() / (RAND_MAX+1);
+//        double a = low + prob*(high-low);
+//        cout << prob << a;
+
+////        cout<< (qrand() % ((high + 1) - low) + low);
+
+//    }
 
     return 0;
 }
