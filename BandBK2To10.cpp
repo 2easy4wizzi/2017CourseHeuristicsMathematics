@@ -96,7 +96,8 @@ void BandBK2To10::calcLowerBound(Node *node) const
 
 //given a nodes current number of machines - return the maximum of 3 global lower bounds
 uint BandBK2To10::getGlobalLowerByMachinesSize() const{
-    return qMax( qMax(perfectSplit,pMax), pigeonholePrinciple );
+    uint perfectSplitUint = qCeil(perfectSplit);
+    return qMax( qMax(perfectSplitUint,pMax), pigeonholePrinciple );
 }
 
 /*upper bound - "alg" for upper bound

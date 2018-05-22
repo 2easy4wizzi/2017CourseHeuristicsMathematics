@@ -112,7 +112,7 @@ public:
     void calculateGlobalLowerBound(const QList<uint>& allJobs);
     void runBnbRec(Node* node, uint depth);
     uint getJob();
-    uint perfectSplit;//global lower 1
+    double perfectSplit;//global lower 1
     uint pMax;//global lower 2
     uint pigeonholePrinciple;//global lower 3
     QList<Node*> activeNodes;
