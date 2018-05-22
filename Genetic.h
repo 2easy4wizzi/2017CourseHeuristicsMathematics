@@ -9,21 +9,30 @@
 #define QT_MAX_UINT 2000000000
 
 /*Q_OBJECT*/
-class Gene {
+class Gene  {
 public:
-    Gene() {}
-    Gene(QList<uint> _content);
+    Gene(){}
+    Gene(QList<uint> _jobs, const uint& _numberOfMachines, QString _name);
+    void buildRandomGene();
+    QString toString();
     /*Members*/
     QList<uint> content;
+    QList<uint> jobs;
+    uint numberOfMachines;
     double targetFunctionValue;
-    const QString& toString();
+    QString objectName;
+
+private:
+    void getTargetFunctionValue();
+
+private:
+    uint getRandNumber(uint low, uint high);
 };
 
 
 class Genetic
 {
 public:
-    Genetic();
     Genetic(const uint& _populationSize, const uint& _generationsNumber, const uint& _machinesNumber, const QList<uint>& _allJobs, const uint& _debugLevel);
 
     /*Create and assigns currentGeneration */
@@ -45,7 +54,8 @@ public:
 
     /*Aux Function*/
     float calcFitness(const Gene& gene);
-    const QString& toString();
+    QString toString();
+    void debugPrint(QString str, uint priority);
 
     /*Members*/
     QList<Gene> currentGen;
@@ -53,7 +63,7 @@ public:
     Gene fittestGene;
     const uint populationSize;
     const uint generationsNumber;
-    const uint machinesNumber;
+    const uint numberOfMachines;
     const QList<uint> allJobs;
     const uint debugLevel;
 };

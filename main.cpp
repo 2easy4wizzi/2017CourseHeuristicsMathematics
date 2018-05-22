@@ -6,6 +6,7 @@
 
 #include "BandBK2To10.h"
 #include "LocalK2To10.h"
+#include "Genetic.h"
 
 static QMap<uint, QList<uint>> inputsMap;
 void initInputs();
@@ -43,9 +44,9 @@ int main(int argc, char *argv[])
 
     //by hardcode manual input
 
-    QList<QPair<QString,QString>> costumTasksBnb = getInputByDemand("U", 5, -1, -1, inputToSol);
-    cout << costumTasksBnb;
-    runBNB(costumTasksBnb);
+//    QList<QPair<QString,QString>> costumTasksBnb = getInputByDemand("U", 5, -1, -1, inputToSol);
+//    cout << costumTasksBnb;
+//    runBNB(costumTasksBnb);
 
 /*local*/
 //    //all Uniform - 130
@@ -72,8 +73,13 @@ int main(int argc, char *argv[])
 //    QList<QPair<QString,QString>> namedTasksLocal = getInputByNames(namesLocal, inputToSol);
 //    runLocalSearch(namedTasksLocal);
 
-
-
+/*Genetic*/
+    const uint& _populationSize(10);
+    const uint& _generationsNumber(1);
+    const uint& _machinesNumber(2);
+    QList<uint> allJobs = (QList<uint>() << 1 << 2 << 5 << 6);
+    const uint& _debugLevel(3);
+    Genetic g(_populationSize, _generationsNumber, _machinesNumber, allJobs,_debugLevel);
 
     return 0;
 }
