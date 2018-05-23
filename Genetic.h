@@ -72,7 +72,8 @@ public:
     /*Aux Members*/
     const uint debugLevel;
     uint currentGenIndex;
-    double lowerBound;
+    uint lowerBound;
+    static uint globalBestReplace; //TODO - TEMP var to see how much generation are effective
 };
 
 

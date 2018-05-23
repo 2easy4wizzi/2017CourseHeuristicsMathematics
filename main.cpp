@@ -61,13 +61,13 @@ int main(int argc, char *argv[])
 //    runLocalSearch(namedTasksLocal);
 
 /*Genetic*/
-    //by hardcode name
-    QStringList namesGenetic = (QStringList() << "NU_1_0500_25_3.txt");
-    QList<QPair<QString,QString>> namedTasksGenetic = getInputByNames(namesGenetic, inputToSol);
-    const uint& _populationSize(100);
-    const uint& _generationsNumber(100);
-    const uint& _debugLevel(3);
-    runGenetic(namedTasksGenetic,_populationSize, _generationsNumber, _debugLevel );
+//    //by hardcode name
+//    QStringList namesGenetic = (QStringList() << "NU_1_0500_25_3.txt");
+//    QList<QPair<QString,QString>> namedTasksGenetic = getInputByNames(namesGenetic, inputToSol);
+//    const uint& _populationSize(100);
+//    const uint& _generationsNumber(3);
+//    const uint& _debugLevel(3);
+//    runGenetic(namedTasksGenetic,_populationSize, _generationsNumber, _debugLevel );
 
 //    //by manual input
 //    const uint& _populationSize(100);
@@ -75,6 +75,15 @@ int main(int argc, char *argv[])
 //    const uint& _machinesNumber(5);
 //    QList<uint> allJobs = getInput(38);
 //    Genetic g(_populationSize, _generationsNumber, _machinesNumber, allJobs,_debugLevel);
+
+    //all 10 jobs tasks
+    QList<QPair<QString,QString>> all10Jobs = getInputByDemand("U", -1, 10, -1, inputToSol);
+//    QPair<QString,QString> p = all10Jobs.first();
+//    QList<QPair<QString,QString>> first10Jobs; first10Jobs << p; // NU_1_0010_05_0.txt
+    const uint& _populationSize(100);
+    const uint& _generationsNumber(100);
+    const uint& _debugLevel(2);
+    runGenetic(all10Jobs,_populationSize, _generationsNumber, _debugLevel );
 
     return 0;
 }
@@ -198,19 +207,17 @@ void runGenetic(QList<QPair<QString,QString>> inputToSol, uint _populationSize, 
     double std(0);
     QTime timerTotal; timerTotal.start();
     for (int i = 0; i < inputToSol.size(); ++i) {
+
         cout << QString("--------------------START %1 from %2--------------------------------").arg(i+1).arg(inputToSol.size()); QTime timer; timer.start();
         QPair<QString,QString> inputToSolPair = inputToSol.at(i);
         cout << QString("input file number %1: inputName=%2 and solutionName=%3").arg(i+1).arg(inputToSolPair.first).arg(inputToSolPair.second);
         double tf(0); int numberOfMachines(0); double globalLower(0);
         const QList<uint> allJobs = getInputFromFile(inputToSolPair, tf, numberOfMachines, globalLower); //getting jobs from input file, printing data from files(input and sol file) and taking the upperBound as targer function(tf)
-
+        tf-=numberOfMachines; //remove num machines
         Genetic g(_populationSize, _generationsNumber, numberOfMachines, allJobs,_debugLevel);
 
-        cout << "----Our Results-------";
-
-
         cout << QString("----Comparison for the %1 example----").arg(i);
-        cout << QString("***tf from benchmark was %1(we added the number of machines) and target function from our Genetic search is %2").arg(tf).arg(g.bestGeneFound.targetFunctionValue);
+        cout << QString("***tf from benchmark=%1 target function from our Genetic=%2").arg(tf).arg(g.bestGeneFound.targetFunctionValue);
         if(tf == g.bestGeneFound.targetFunctionValue){
             good[allJobs.size()]++;
             cout << "***RESULT IS THE SAME";
@@ -228,6 +235,7 @@ void runGenetic(QList<QPair<QString,QString>> inputToSol, uint _populationSize, 
     cout << QString("Mistakes(size-numberMistakes):") << bad;
     cout << QString("Total Avegare error: %1").arg(std/inputToSol.size());
     cout << QString("Total time: %1 seconds").arg((double(timerTotal.elapsed()) / 1000));
+    cout << "oldest Gen" << Genetic::globalBestReplace;
 }
 
 const uint& _populationSize(100);
@@ -342,8 +350,12 @@ const QList<uint> getInputFromFile(QPair<QString,QString> inputToSol, double& tf
 
     double sumAll(0);
     for(const uint& job :inputReturn) sumAll+= job;
-    //cout << "input selected:"<<inputReturn << "size" << inputReturn.size() << "sum" << sumAll;
-    cout << "input selected:" << "size" << inputReturn.size() << "sum" << sumAll;
+    if(inputReturn.size()<=10){
+        cout << "input selected:"<<inputReturn << "size" << inputReturn.size() << "sum" << sumAll;
+    }
+    else{
+        cout << "input selected:" << "size" << inputReturn.size() << "sum" << sumAll;
+    }
     return inputReturn;
 }
 

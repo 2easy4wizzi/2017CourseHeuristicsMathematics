@@ -1,5 +1,7 @@
 #include "Genetic.h"
 
+uint Genetic::globalBestReplace=0;
+
 Genetic::Genetic(const uint &_populationSize, const uint &_generationsNumber, const uint &_machinesNumber, const QList<uint> &_allJobs, const uint &_debugLevel)
     :populationSize(_populationSize), generationsNumber(_generationsNumber),
      numberOfMachines(_machinesNumber), allJobs(_allJobs),
@@ -13,7 +15,7 @@ Genetic::Genetic(const uint &_populationSize, const uint &_generationsNumber, co
         calcLowerBound(allJobs);
         initFirstGeneration();
         runGenetic();
-        debugPrint(QString("**END Lower bound is: %1").arg(lowerBound),0);
+        debugPrint(QString("**END oldes Gen=%1").arg(globalBestReplace),0);
         debugPrint(QString("**Best gene found: %1").arg(bestGeneFound.toString()),0);
     }
 
@@ -29,15 +31,15 @@ void Genetic::initFirstGeneration()
         }
         currentGen << gene;
     }
-    debugPrint(QString("Best gene from 1st generation: %1").arg(bestGeneFound.toString()),2);
+    debugPrint(QString("**Best gene from 1st generation: %1").arg(bestGeneFound.toString()),2);
 }
 
 void Genetic::runGenetic()
 {
 
-    bool stop(false);
+//    bool stop(false);
     //TODO return this
-//    bool stop(checkOptimumReached());
+    bool stop(checkOptimumReached());
     for(uint i=0; i<generationsNumber && !stop; ++i){
         currentGenIndex = i+1;//used in toString
         if(i){//moving gen forward
@@ -45,9 +47,10 @@ void Genetic::runGenetic()
             nextGen.clear();
             checkIfBetterTfExistInNewGen();
         }
+
         debugPrint(toString(),3);//prints ith+1 generation genes
 
-//        stop = checkOptimumReached();//calc optimum TODO
+        stop = checkOptimumReached();//calc optimum TODO
         //TODO return
         if(!stop){
             createNextGeneration();
@@ -71,51 +74,68 @@ QList<QPair<Gene,float>> Genetic::buildProbabilityMap()
     double minimalTf(INF);
 
     for( Gene g : currentGen){
-        if(g.targetFunctionValue < minimalTf)
+        if(g.targetFunctionValue < minimalTf){
             minimalTf = g.targetFunctionValue;
-        if(g.targetFunctionValue > maximalTf)
+        }
+        if(g.targetFunctionValue > maximalTf){
             maximalTf = g.targetFunctionValue;
-
-
-
+        }
         tfSum += g.targetFunctionValue;
     }
-    cout << "tfSum: " << tfSum;
+//    cout << "tfSum: " << tfSum;
     tfSum = maximalTf * currentGen.size() - tfSum;
-    cout << "Normalized tfSum: " << tfSum;
-    cout << "Maximal Tf: " << maximalTf;
+//    cout << "Normalized tfSum: " << tfSum;
+//    cout << "Maximal Tf: " << maximalTf;
 
     float totalProb(0);
 
     for( Gene g : currentGen){
         float geneFitness = (maximalTf-g.targetFunctionValue)/tfSum;
 //        cout << maximalTf << g.targetFunctionValue << tfSum;
-//        cout << geneFitness;
+//        cout << maximalTf;
+//        cout << g.targetFunctionValue;
 //        exit(0);
-
-        totalProb+=geneFitness;
         QPair<Gene,float> newPair;
         newPair.first = g;
-        newPair.second = geneFitness;
+        if(geneFitness != geneFitness){//geneFitness is nan
+//            cout << (geneFitness != geneFitness) << "nan happened";
+            newPair.second = 0;
+        }
+        else{
+            newPair.second = geneFitness;
+            totalProb+=geneFitness;
+        }
         probabilityPairs << newPair;
     }
 
-    for(int i = 0; i < probabilityPairs.size(); ++i){
-        probabilityPairs[i].second /= totalProb;
+    if(totalProb > 0){
+        for(int i = 0; i < probabilityPairs.size(); ++i){
+            probabilityPairs[i].second /= totalProb;
+        }
+    }
+    else{
+        for(int i = 0; i < probabilityPairs.size(); ++i){
+            probabilityPairs[i].second = 1/float(probabilityPairs.size());
+        }
     }
 
-    float sum(0);
-    for(const QPair<Gene,float>& p : probabilityPairs){
-        cout << p.first.toString() << p.second;
-        sum+= p.second;
-    }
-    cout << sum;
-    exit(0);
+//    for(int i = 0; i < probabilityPairs.size(); ++i){
+//        cout << totalProb<<probabilityPairs[i].second;
+//    }
+//    float sum(0);
+//    for(const QPair<Gene,float>& p : probabilityPairs){
+//        cout << p.first.toString() << p.second;
+//        sum+= p.second;
+//    }
+//    cout << sum;
     return probabilityPairs;
 }
 
 Gene Genetic::selectGeneByFitness(const QList<QPair<Gene, float> > &genesToProb,QList<uint> percentMapping)
 {
+    if(percentMapping.isEmpty()){
+        cout << "SOMETHING IS WORNG" << genesToProb.size() << percentMapping.size();
+    }
     uint rand = getRandNumberG(1,percentMapping.size());
     Gene selected = genesToProb[percentMapping[rand]].first;
     return selected;
@@ -131,26 +151,32 @@ QList<QPair<Gene, Gene> > Genetic::selectParents(const QList<QPair<Gene, float> 
             percentMapping.append(i);
         }
     }
+    if(percentMapping.isEmpty()){
+        cout << "SOMETHING IS WORNG" << percentMapping.size() << percentMapping;
+    }
     QList<QPair<Gene, Gene> > parents;
     QList<Gene> elitizmOnceOnly;
     while(uint(parents.size()) <  populationSize/2){
+
         Gene g1 = selectGeneByFitness(genesToProb,percentMapping);
+
         Gene g2 = selectGeneByFitness(genesToProb,percentMapping);
+
         if((g1 != g2) || (g1 == g2 && !elitizmOnceOnly.contains(g1))){
             QPair<Gene, Gene> p; p.first = g1; p.second=g2;
             parents.push_back(p);
             //TODO delete
-            for(QPair<Gene, float> geneProb: genesToProb) {
-                if(geneProb.first == p.first) {
+//            for(QPair<Gene, float> geneProb: genesToProb) {
+//                if(geneProb.first == p.first) {
 //                    cout << geneProb.second <<  p.first.toString();
-                    for(QPair<Gene, float> geneProb: genesToProb) {
+//                    for(QPair<Gene, float> geneProb: genesToProb) {
 //                        if(geneProb.first.objectName == p.second.objectName) {
 //                            cout << geneProb.second << p.second.toString();
 //                            cout << "--";
 //                        }
-                    }
-                }
-            }
+//                    }
+//                }
+//            }
         }
     }
     return parents;
@@ -181,6 +207,7 @@ QList<Gene> Genetic::doXOandMutate(const QList<QPair<Gene, Gene> > &parents)
             //TODO - if converge fast add here fixed re attempts of XO
         }
         nextGenLocal << children.first << children.second;
+//        cout << children.first.targetFunctionValue << children.second.targetFunctionValue;
     }
 
 //    currentGen = nextGenLocal;
@@ -224,7 +251,7 @@ void Genetic::calcLowerBound(const QList<uint>& allJobs)
         pigeonholePrinciple += allJobs[allJobs.size() - j - 1];
     }
 
-    lowerBound = qMax( qMax(perfectSplit,pMax), pigeonholePrinciple );
+    lowerBound = qCeil(qMax( qMax(perfectSplit,pMax), pigeonholePrinciple ));
 
     debugPrint(QString("LowerBounds calc: perfectSplit=%1, pMax=%2, pigeonholePrinciple=%3 => lowerBound set to %4").arg(perfectSplit).arg(pMax).arg(pigeonholePrinciple).arg(lowerBound),2);
 }
@@ -234,7 +261,10 @@ void Genetic::checkIfBetterTfExistInNewGen()
     for(const Gene& g: currentGen){
         if(g.targetFunctionValue < bestGeneFound.targetFunctionValue){
             bestGeneFound = g;
-            debugPrint(QString("Best gene got replaced in generation %1. Gene details: %2").arg(currentGenIndex).arg(bestGeneFound.toString()),1);
+            debugPrint(QString("**Best gene got replaced in generation %1. Gene details: %2").arg(currentGenIndex).arg(bestGeneFound.toString()),1);
+            if(currentGenIndex > globalBestReplace){
+                globalBestReplace = currentGenIndex;
+            }
         }
     }
 }
@@ -284,20 +314,10 @@ bool Gene::operator !=(const Gene &b) const
 
 QString Gene::toString() const //TODO - remove jobs and content - add summed Machine conetent
 {
-    QString format = QString("TF: %1, #Machines: %2 Jobs: %3 Content: %4");
-    format.prepend(objectName);
-
-
-    QString jobsStr("<");
-    int i(0);
-    for(const uint& job : jobs){
-        if (i++) jobsStr.append(",");
-        jobsStr += (QString::number(job));
-    }
-    jobsStr.append(">");
+    QString format = QString("%1 TF=%2, #Machines=%3, content:%4, %5");//NAME, TF, #Machines, content(cromozom), content of solution(machines)
 
     QString contentStr("<");
-    i = 0;
+    int i = 0;
     for(const uint& machineIndex : content){
         if (i++) contentStr.append(",");
         contentStr += (QString::number(machineIndex));
@@ -316,29 +336,33 @@ QString Gene::toString() const //TODO - remove jobs and content - add summed Mac
         summedMachines[content.at(i)-1] += jobs.at(i);
     }
     QString machinesContent;
-    for(uint i = 0; i < numberOfMachines; ++i) {
-        QString mstr = QString("bucket%1 sum:%2 content= (").arg(i+1).arg(summedMachines.at(i));
-        if(machines.at(i).isEmpty()){
-            mstr.append("-)| ");
-            machinesContent.append(mstr);
-        }
-        else{
-            for(uint j : machines.at(i)){
-                mstr += QString("%1, ").arg(j);
+    if(jobs.size() <=10 && 0){
+        for(uint i = 0; i < numberOfMachines; ++i) {
+            QString mstr = QString("\n\t\tbucket%1 sum:%2 content= (").arg(i+1).arg(summedMachines.at(i));
+            if(machines.at(i).isEmpty()){
+                mstr.append("-)| ");
+                machinesContent.append(mstr);
             }
-            mstr = mstr.mid(0,mstr.size()-2);
-            machinesContent.append(QString("%1)| ").arg(mstr));
+            else{
+                for(uint j : machines.at(i)){
+                    mstr += QString("%1, ").arg(j);
+                }
+                mstr = mstr.mid(0,mstr.size()-2);
+                machinesContent.append(QString("%1) ").arg(mstr));
+            }
         }
+        machinesContent = machinesContent.mid(0,machinesContent.size()-2);
     }
-    machinesContent = machinesContent.mid(0,machinesContent.size()-2);
-    //TODO -TEMP
-    jobsStr ="";
-    contentStr ="";
-    machinesContent ="";
-    //TEMP
+    else{
+        QString mstr;
+        for(uint sum : summedMachines){
+           mstr.append(QString("%1,").arg(sum));
+        }
+        mstr = mstr.mid(0,mstr.size()-1);
+        machinesContent = QString("Summed Machines(%1)").arg(mstr);
+    }
 
-    QString str = format.arg(targetFunctionValue).arg(numberOfMachines).arg(jobsStr).arg(contentStr);
-    str+=machinesContent;
+    QString str = format.arg(objectName).arg(targetFunctionValue).arg(numberOfMachines).arg(contentStr).arg(machinesContent);
     return (str);
 }
 
