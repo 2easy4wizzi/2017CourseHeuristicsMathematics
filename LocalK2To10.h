@@ -1,16 +1,6 @@
 #ifndef LOCALK2TO10_H
 #define LOCALK2TO10_H
-
-#include <QDebug>
-#include <QTime>
-#include <QtMath>
-#define cout qDebug()
-#define INF 10000000000
-#define QT_MAX_UINT 2000000000
-//0 for nothing, 1 for minimum, 2 for medium, 3 for maximum
-#define DEBUGLEVELLOCAL 0
-#define K_UPPER 10
-#define MACHINES_NUMBER 5
+#include "Utils.h"
 
 class LocalK2To10
 {

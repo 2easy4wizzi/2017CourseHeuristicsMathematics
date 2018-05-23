@@ -1,8 +1,12 @@
 #include "BandBK2To10.h"
 
+//used to track memory leaks
+static uint nodesSeenSoFar = 0;
+static uint nodesActive = 0;
+
 BandBK2To10::BandBK2To10(QList<uint> allJobs)
 {
-    if(allJobs.isEmpty()){ cout2 << "input is empty"; return; }
+    if(allJobs.isEmpty()){ cout << "input is empty"; return; }
     QTime timer; timer.start();//time
     nodesSeenSoFar = 0; nodesActive = 0;//memory leak
     calculateGlobalLowerBound(allJobs);
@@ -12,23 +16,23 @@ BandBK2To10::BandBK2To10(QList<uint> allJobs)
         runBnbRec(root, 0);
         Node* bestSol = new Node(bestSolutionFound.second, QList<uint>());
         bestSol->U = bestSolutionFound.first;
-        if(DEBUGLEVEL == 1) cout2 << "BEST FOUND: " << bestSol->leafToString();
-        if(DEBUGLEVEL == 1) cout2 << "nodes seen:" << nodesSeenSoFar << ". run time: " << (double(timer.elapsed()) / 1000) << "seconds";
-//        cout2 << "cut off histogram:";
+        if(DEBUGLEVELBNB == 1) cout << "BEST FOUND: " << bestSol->leafToString();
+        if(DEBUGLEVELBNB == 1) cout << "nodes seen:" << nodesSeenSoFar << ". run time: " << (double(timer.elapsed()) / 1000) << "seconds";
+//        cout << "cut off histogram:";
 //        uint totalCutOffs(0);
 //        for(int i=0; i<allJobs.size(); ++i){
 //            if(cutOffHist.contains(i)){
-//                cout2 << qPrintable(QString("   on depth %1 there were %2 cut offs").arg(i).arg(cutOffHist[i]));
+//                cout << qPrintable(QString("   on depth %1 there were %2 cut offs").arg(i).arg(cutOffHist[i]));
 //                totalCutOffs += cutOffHist[i];
 //            }
 //        }
-//        cout2 << qPrintable(QString("**there were %1 cutoffs in total").arg(totalCutOffs));
+//        cout << qPrintable(QString("**there were %1 cutoffs in total").arg(totalCutOffs));
     }
 }
 
 BandBK2To10::BandBK2To10(QList<uint> allJobs, int _numberOfMachines) : numberOfMachines(_numberOfMachines)
 {
-    if(allJobs.isEmpty()){ cout2 << "input is empty"; return; }
+    if(allJobs.isEmpty()){ cout << "input is empty"; return; }
     QTime timer; timer.start();//time
     nodesSeenSoFar = 0; nodesActive = 0;//memory leak
     calculateGlobalLowerBound(allJobs);
@@ -38,8 +42,8 @@ BandBK2To10::BandBK2To10(QList<uint> allJobs, int _numberOfMachines) : numberOfM
         runBnbRec(root, 0);
         Node* bestSol = new Node(bestSolutionFound.second, QList<uint>());
         bestSol->U = bestSolutionFound.first;
-        if(DEBUGLEVEL == 1) cout2 << "BEST FOUND: " << bestSol->leafToString();
-        if(DEBUGLEVEL == 1) cout2 << "nodes seen:" << nodesSeenSoFar << ". run time: " << (double(timer.elapsed()) / 1000) << "seconds";
+        if(DEBUGLEVELBNB == 1) cout << "BEST FOUND: " << bestSol->leafToString();
+        if(DEBUGLEVELBNB == 1) cout << "nodes seen:" << nodesSeenSoFar << ". run time: " << (double(timer.elapsed()) / 1000) << "seconds";
     }
 }
 
@@ -58,11 +62,11 @@ Node* BandBK2To10::initializeRoot(const QList<uint> &allJobs)
     calcUpperBoundAndCheckBest(treeHead);
 
     if(treeHead->L >= bestSolutionFound.first){
-        if(DEBUGLEVEL == 1){
+        if(DEBUGLEVELBNB == 1){
             QString msg("CUTOFF was made on ROOT. ");
             msg.append("job on hand: <" + QString::number(job) + ">. ");
             msg.append("lower bound=" + QString::number(treeHead->L) + " is bigger or equal than " + "best solution so far=" + QString::number(bestSolutionFound.first) );
-            cout2 << "       " << msg;
+            cout << "       " << msg;
         }
         if(treeHead){
             delete treeHead;
@@ -173,10 +177,10 @@ void BandBK2To10::calcUpperBoundAndCheckBest(Node *node)
     if(lowestUpperfound < bestSolutionFound.first){//found a new best
         bestSolutionFound.first = lowestUpperfound;
         bestSolutionFound.second = bestMachines;
-        if(DEBUGLEVEL >= 1){
+        if(DEBUGLEVELBNB >= 1){
             Node* newBestSol = new Node(bestMachines, QList<uint>()); nodesSeenSoFar--;
             newBestSol->U = lowestUpperfound;
-            cout2 << "       #########bestSolutionFound just got replaced"  << newBestSol->leafToString() << "#########";
+            cout << "       #########bestSolutionFound just got replaced"  << newBestSol->leafToString() << "#########";
             if(newBestSol){
                 delete newBestSol;
             }
@@ -205,7 +209,7 @@ void BandBK2To10::calculateGlobalLowerBound(const QList<uint> &allJobs)
     //global lower 2 - add at least 1 machine
     //Jobs are sorted
     pMax = allJobs.first() + 1;
-//    cout2 << allJobs.first()<< allJobs.first()+1 << pMax;
+//    cout << allJobs.first()<< allJobs.first()+1 << pMax;
     //global lower 3 - calculation
     //Jobs are sorted
     uint w = qCeil(double(allJobs.size()) / double(numberOfMachines));
@@ -222,9 +226,9 @@ void BandBK2To10::calculateGlobalLowerBound(const QList<uint> &allJobs)
 void BandBK2To10::runBnbRec(Node *parentNode, uint depth)
 {
     uint job = parentNode->getJob();
-    if(DEBUGLEVEL == 2) {
+    if(DEBUGLEVELBNB == 2) {
         QString spaces(""); for(uint i=0; i<depth ; ++i){ spaces.append("  "); }
-        cout2 << qPrintable("\n" + spaces + "*New Sub Tree Parent- depth=" + QString::number(depth)) <<parentNode->toString() <<QString("current active(job=%1)").arg(job) ;
+        cout << qPrintable("\n" + spaces + "*New Sub Tree Parent- depth=" + QString::number(depth)) <<parentNode->toString() <<QString("current active(job=%1)").arg(job) ;
     }
     for(int i=0; i < numberOfMachines; ++i){
         Node* sonI =  new Node(parentNode->machines, parentNode->jobsLeft);
@@ -234,21 +238,21 @@ void BandBK2To10::runBnbRec(Node *parentNode, uint depth)
         sonI->machines[i].push_back(job);
         calcLowerBound(sonI);
         calcUpperBoundAndCheckBest(sonI);
-        if(DEBUGLEVEL == 2) {
+        if(DEBUGLEVELBNB == 2) {
             QString spaces(""); for(uint i=0; i<depth+1; ++i){ spaces.append("  "); }
-            cout2 << qPrintable(spaces +  "depth:" + QString::number(depth+1)) << "son" + QString::number(i) << sonI->toString();
+            cout << qPrintable(spaces +  "depth:" + QString::number(depth+1)) << "son" + QString::number(i) << sonI->toString();
         }
         if(!sonI->jobsLeft.isEmpty()){
             if(sonI->L >= bestSolutionFound.first){
 
                 cutOffHist.contains(depth+1) ? cutOffHist[depth+1]++ : cutOffHist[depth+1]=1;
-                if(DEBUGLEVEL == 2){
+                if(DEBUGLEVELBNB == 2){
                     QString spaces(""); for(uint i=0; i<depth+1; ++i){ spaces.append("  "); }
                     QString msg(spaces + "CUTOFF was made. ");
                     msg.append("job on hand: <" + QString::number(job) + ">. ");
                     msg.append("lower bound=" + QString::number(sonI->L) + " is bigger than " + "best solution so far=" + QString::number(bestSolutionFound.first) );
                     msg.prepend(spaces);
-                    cout2 << qPrintable(msg);
+                    cout << qPrintable(msg);
                 }
                 if(sonI){
                     delete sonI;
@@ -259,9 +263,9 @@ void BandBK2To10::runBnbRec(Node *parentNode, uint depth)
             }
         }
         else{
-            if(DEBUGLEVEL == 2){
+            if(DEBUGLEVELBNB == 2){
                 QString spaces(""); for(uint i=0; i<depth+1; ++i){ spaces.append("  "); }
-                cout2 << qPrintable(spaces +  "leaf:") << sonI->leafToString();
+                cout << qPrintable(spaces +  "leaf:") << sonI->leafToString();
             }
             if(sonI){
                 delete sonI;
@@ -278,3 +282,82 @@ QString BandBK2To10::print()
     QString tf = QString::number(bestSolutionFound.first);
     return QString("tf=%1. %2").arg(tf).arg(ms);
 }
+
+Node::Node(QList<QList<uint>> _parentsMachines, QList<uint> _jobsLeft):L(0), U(0){
+    nodesSeenSoFar++;
+    nodesActive++;
+    if(DEBUGLEVELBNB >=1 && (nodesSeenSoFar % 1000000 == 0)){
+        cout << nodesSeenSoFar << "nodes so far" << "; active" << nodesActive << "; deleted" << nodesSeenSoFar - nodesActive;
+    }
+    machines = _parentsMachines;
+    jobsLeft = _jobsLeft;
+}
+
+Node::~Node()
+{
+    nodesActive--;
+}
+
+QString Node::leafToString()
+{
+    QString machineStr("Target function=" + QString::number(U) + " Number of Machines=" + QString::number(machines.size()) + " . Content: ");
+    int i(0);
+
+    for(const QList<uint>& machine : machines){
+        if (i++) machineStr.append(",");
+        machineStr.append("<");
+        int j(1);
+        for(const uint& job: machine){
+            machineStr += (QString::number(job));
+            if (j++ != machine.size()) machineStr.append(",");
+        }
+        machineStr.append(">");
+    }
+    return machineStr;
+}
+
+QString Node::endResultToString()
+{
+    QString machineStr("Machines:");
+    int i(0);
+    for(const QList<uint>& machine : machines){
+        if (i++) machineStr.append(",");
+        machineStr.append("<");
+        int j(1);
+        for(const uint& job: machine){
+            machineStr += (QString::number(job));
+            if (j++ != machine.size()) machineStr.append(",");
+        }
+        machineStr.append(">");
+    }
+
+    return (machineStr);
+}
+
+QString Node::toString()
+{
+    QString up("U="  + QString::number(U));
+    QString down(" L=" + QString::number(L));
+    QString left(". jobs Left: <");
+    int j(1);
+    for(const uint& job : jobsLeft){
+        left += (QString::number(job));
+        if (j++ != jobsLeft.size()) left.append(",");
+    }
+    left.append(">");
+    QString machineStr(". Machines:");
+    int i(0);
+    for(const QList<uint>& machine : machines){
+        if (i++) machineStr.append(",");
+        machineStr.append("<");
+        int j(1);
+        for(const uint& job: machine){
+            machineStr += (QString::number(job));
+            if (j++ != machine.size()) machineStr.append(",");
+        }
+        machineStr.append(">");
+    }
+
+    return (up + down + machineStr+left  );
+}
+

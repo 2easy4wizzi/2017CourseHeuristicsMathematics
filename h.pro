@@ -15,11 +15,13 @@ TEMPLATE = app
 SOURCES += main.cpp \
     BandBK2To10.cpp \
     LocalK2To10.cpp \
-    Genetic.cpp
+    Genetic.cpp \
+    Utils.cpp
 
 HEADERS  += \
     BandBK2To10.h \
     LocalK2To10.h \
-    Genetic.h
+    Genetic.h \
+    Utils.h
 
 FORMS    +=

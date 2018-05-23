@@ -1,16 +1,11 @@
-#include <windows.h>
-#include <QApplication>
-#include <algorithm>
-#include <QDir>
-#include <QDirIterator>
-
+#include "Utils.h"
 #include "BandBK2To10.h"
 #include "LocalK2To10.h"
 #include "Genetic.h"
 
 static QMap<uint, QList<uint>> inputsMap;
 void initInputs();
-const QList<uint> getInput(int inputBatch, bool shouldShuffle, int sortOrder);
+const QList<uint> getInput(int inputBatch);
 QList<uint> shuffleMyQLIST(QList<uint> &input3rand);
 uint getRandNumber(uint low, uint high );
 void runOnAllFolder();
@@ -18,6 +13,7 @@ QList<QPair<QString, QString> > getAllTestsNames();
 const QList<uint> getInputFromFile(QPair<QString,QString> inputToSol, double& tf, int& numberOfMachines, double &globalLowerBound);
 QList<uint> parseFiles(QPair<QString,QString> inputToSol, double& tf, int &numberOfMachines, double &globalLowerBound);
 void runLocalSearch(QList<QPair<QString,QString>> inputToSol);
+void runGenetic(QList<QPair<QString,QString>> inputToSol, uint _populationSize, uint _generationsNumber, uint _debugLevel);
 QList<QPair<QString,QString>> getInputByDemand(QString dist, int range, int jobs, int numMachines, QList<QPair<QString, QString> > inputToSol);
 QList<QPair<QString,QString>> getInputByNames(QStringList names, QList<QPair<QString, QString>> inputToSol);
 void runBNB(QList<QPair<QString,QString>> inputToSol);
@@ -27,7 +23,8 @@ int main(int argc, char *argv[])
     qsrand(uint(QTime::currentTime().msec()));//keep this line to init seed for qrand()
     Q_UNUSED(argc);
     Q_UNUSED(argv);
-//    QList<QPair<QString,QString>> inputToSol = getAllTestsNames();
+    initInputs();
+    QList<QPair<QString,QString>> inputToSol = getAllTestsNames();
 
 /*bnb*/
 //    //all 10 jobs tasks
@@ -43,8 +40,7 @@ int main(int argc, char *argv[])
 //    QList<QPair<QString,QString>> namedTasksBnb = getInputByNames(namesBnb, inputToSol);
 //    runBNB(namedTasksBnb);
 
-    //by hardcode manual input
-
+//    //by hardcode manual input
 //    QList<QPair<QString,QString>> costumTasksBnb = getInputByDemand("U", 5, -1, -1, inputToSol);
 //    cout << costumTasksBnb;
 //    runBNB(costumTasksBnb);
@@ -59,41 +55,26 @@ int main(int argc, char *argv[])
 //    cout << nonUniformsTasksLocal;
 //    runLocalSearch(nonUniformsTasksLocal);
 
-//    //all the rest we owe to LEA
-//    QList<QPair<QString,QString>> nonUniformsTasksLocal1000 = getInputByDemand("NU", 1, 1000, -1, inputToSol);
-////    cout << nonUniformsTasksLocal1000;
-//    QList<QPair<QString,QString>> nonUniformsTasksLocal500 = getInputByDemand("NU", 1, 500, 25, inputToSol);
-//    nonUniformsTasksLocal500.pop_front();
-//    nonUniformsTasksLocal500.pop_front();
-//    nonUniformsTasksLocal500.pop_front();
-//    QList<QPair<QString,QString>> rest = nonUniformsTasksLocal1000 + nonUniformsTasksLocal500;
-//    runLocalSearch(rest);
-
 //    //by hardcode name
 //    QStringList namesLocal = (QStringList() << "NU_1_0500_25_3.txt");
 //    QList<QPair<QString,QString>> namedTasksLocal = getInputByNames(namesLocal, inputToSol);
 //    runLocalSearch(namedTasksLocal);
 
 /*Genetic*/
-    const uint& _populationSize(10);
-    const uint& _generationsNumber(2);
-    const uint& _machinesNumber(3);
-    QList<uint> allJobs = (QList<uint>() << 1 << 2 << 5 << 6);
+    //by hardcode name
+    QStringList namesGenetic = (QStringList() << "NU_1_0500_25_3.txt");
+    QList<QPair<QString,QString>> namedTasksGenetic = getInputByNames(namesGenetic, inputToSol);
+    const uint& _populationSize(100);
+    const uint& _generationsNumber(100);
     const uint& _debugLevel(3);
-    Genetic g(_populationSize, _generationsNumber, _machinesNumber, allJobs,_debugLevel);
+    runGenetic(namedTasksGenetic,_populationSize, _generationsNumber, _debugLevel );
 
-
-//    uint low(1);
-//    uint high(1000000);
-//    for(int i=0; i<10; ++i){
-////        Sleep(100);//for rand to have different time
-//        float prob = (float) qrand() / (RAND_MAX+1);
-//        double a = low + prob*(high-low);
-//        cout << prob << a;
-
-////        cout<< (qrand() % ((high + 1) - low) + low);
-
-//    }
+//    //by manual input
+//    const uint& _populationSize(100);
+//    const uint& _generationsNumber(100);
+//    const uint& _machinesNumber(5);
+//    QList<uint> allJobs = getInput(38);
+//    Genetic g(_populationSize, _generationsNumber, _machinesNumber, allJobs,_debugLevel);
 
     return 0;
 }
@@ -211,6 +192,50 @@ void runLocalSearch(QList<QPair<QString,QString>> inputToSol){
     cout << QString("Total time: %1 seconds").arg((double(timerTotal.elapsed()) / 1000));
 }
 
+void runGenetic(QList<QPair<QString,QString>> inputToSol, uint _populationSize, uint _generationsNumber, uint _debugLevel){
+    QMap<int,int> good;
+    QMap<int,int> bad;
+    double std(0);
+    QTime timerTotal; timerTotal.start();
+    for (int i = 0; i < inputToSol.size(); ++i) {
+        cout << QString("--------------------START %1 from %2--------------------------------").arg(i+1).arg(inputToSol.size()); QTime timer; timer.start();
+        QPair<QString,QString> inputToSolPair = inputToSol.at(i);
+        cout << QString("input file number %1: inputName=%2 and solutionName=%3").arg(i+1).arg(inputToSolPair.first).arg(inputToSolPair.second);
+        double tf(0); int numberOfMachines(0); double globalLower(0);
+        const QList<uint> allJobs = getInputFromFile(inputToSolPair, tf, numberOfMachines, globalLower); //getting jobs from input file, printing data from files(input and sol file) and taking the upperBound as targer function(tf)
+
+        Genetic g(_populationSize, _generationsNumber, numberOfMachines, allJobs,_debugLevel);
+
+        cout << "----Our Results-------";
+
+
+        cout << QString("----Comparison for the %1 example----").arg(i);
+        cout << QString("***tf from benchmark was %1(we added the number of machines) and target function from our Genetic search is %2").arg(tf).arg(g.bestGeneFound.targetFunctionValue);
+        if(tf == g.bestGeneFound.targetFunctionValue){
+            good[allJobs.size()]++;
+            cout << "***RESULT IS THE SAME";
+        }
+        else{
+            bad[allJobs.size()]++;
+            std += g.bestGeneFound.targetFunctionValue - tf;
+            cout << "***Different" << g.bestGeneFound.targetFunctionValue - tf;
+        }
+        cout << "Run time: " << (double(timer.elapsed()) / 1000) << "seconds";
+        cout << QString("Correct  (size-numberCorrect):") << good; cout << QString("Mistakes(size-numberMistakes):") << bad; cout << QString("Avegare error: %1").arg(std/i);
+        cout << QString("-----------END %1 from %2-----------------------------------------").arg(i+1).arg(inputToSol.size());
+    }
+    cout << QString("Correct  (size-numberCorrect):") << good;
+    cout << QString("Mistakes(size-numberMistakes):") << bad;
+    cout << QString("Total Avegare error: %1").arg(std/inputToSol.size());
+    cout << QString("Total time: %1 seconds").arg((double(timerTotal.elapsed()) / 1000));
+}
+
+const uint& _populationSize(100);
+const uint& _generationsNumber(100);
+const uint& _machinesNumber(5);
+QList<uint> allJobs = getInput(38);
+const uint& _debugLevel(3);
+
 
 QList<uint> parseFiles(QPair<QString,QString> inputToSol,double& tf, int& numberOfMachines,double& globalLowerBound){
     QList<uint> retVal;
@@ -317,8 +342,8 @@ const QList<uint> getInputFromFile(QPair<QString,QString> inputToSol, double& tf
 
     double sumAll(0);
     for(const uint& job :inputReturn) sumAll+= job;
-    //cout2 << "input selected:"<<inputReturn << "size" << inputReturn.size() << "sum" << sumAll;
-    cout2 << "input selected:" << "size" << inputReturn.size() << "sum" << sumAll;
+    //cout << "input selected:"<<inputReturn << "size" << inputReturn.size() << "sum" << sumAll;
+    cout << "input selected:" << "size" << inputReturn.size() << "sum" << sumAll;
     return inputReturn;
 }
 
@@ -429,28 +454,18 @@ void initInputs(){
         inputsMap[37] = (QList<uint>());
         for(int i = 0; i <= 25; ++i)
             inputsMap[37] << 6 << 8;
+    inputsMap[38] = (QList<uint>()<< 1 << 2 << 5 << 6);
 }
 
-const QList<uint> getInput(int inputBatch, bool shouldShuffle, int sortOrder)
+const QList<uint> getInput(int inputBatch)
 {
     QList<uint> inputReturn = inputsMap.contains(inputBatch) ? inputsMap[inputBatch] : QList<uint>();
-
     if(inputReturn.isEmpty()) return inputReturn;
-    if(shouldShuffle){
-        inputReturn = shuffleMyQLIST(inputReturn);
-    }
-    //sorting from low to high
-    if(sortOrder == -1){
-        std::sort(inputReturn.begin(), inputReturn.end());
-    }
-    //sorting from high to low
-    else if(sortOrder == 1){
-        std::sort(inputReturn.rbegin(), inputReturn.rend());
-    }
+    std::sort(inputReturn.rbegin(), inputReturn.rend());
     double sumAll(0);
     for(const uint& job :inputReturn) sumAll+= job;
-//    cout2 << "input selected:"<<inputReturn << "size" << inputReturn.size() << "sum" << sumAll;
-    cout2 << "input selected:" << "size" << inputReturn.size() << "sum" << sumAll;
+    cout << "input selected:"<<inputReturn << "size" << inputReturn.size() << "sum" << sumAll;
+//    cout << "input selected:" << "size" << inputReturn.size() << "sum" << sumAll;
     return inputReturn;
 }
 
@@ -460,11 +475,4 @@ QList<uint> shuffleMyQLIST(QList<uint> &input3rand)
     qsrand(QDateTime::currentDateTime().toTime_t());
     std::random_shuffle(input3rand.begin(), input3rand.end());
     return input3rand;
-}
-
-uint getRandNumber(uint low, uint high )
-{
-    Sleep(100);//for rand to have different time
-    qsrand(uint(QTime::currentTime().msec()));
-    return (qrand() % ((high + 1) - low) + low);
 }

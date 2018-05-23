@@ -1,12 +1,7 @@
 #ifndef GENETIC_H
 #define GENETIC_H
+#include "Utils.h"
 
-#include <QDebug>
-#include <QTime>
-#include <QtMath>
-#define cout qDebug()
-#define INF 10000000000
-#define QT_MAX_UINT 2000000000
 
 uint getRandNumberG(uint low, uint high);
 
@@ -14,7 +9,10 @@ class Gene  {
 public:
     Gene():targetFunctionValue(INF){}
     Gene(QList<uint> _jobs, const uint& _numberOfMachines, QString _name);
+    Gene(QList<uint> _jobs, const uint& _numberOfMachines, QString _name, QList<uint> _content);
     void buildRandomGene();
+    bool operator ==(const Gene &b) const;
+    bool operator !=(const Gene &b) const;
     QString toString() const;
     /*Members*/
     QList<uint> content;
@@ -25,8 +23,6 @@ public:
 
 private:
     void getTargetFunctionValue();
-
-private:
 
 };
 
@@ -51,14 +47,19 @@ public:
 
     QList<QPair<Gene, Gene>> selectParents(const QList<QPair<Gene,float>>& genesToProb);
 
-    QPair<Gene, Gene> crossOver(const Gene& g1, const Gene& g2);
+    QPair<Gene, Gene> crossOver(const Gene& g1, const Gene& g2, const uint &serialNumber);
+
+    QList<Gene> doXOandMutate(const QList<QPair<Gene, Gene>>& parents);
 
     Gene mutate(const Gene& g);
 
     /*Aux Function*/
-    float calcFitness(const Gene& gene);
+//    float calcFitness(const Gene& gene);
     QString toString();
     void debugPrint(QString str, uint priority);
+    void calcLowerBound(const QList<uint>& allJobs);
+    void checkIfBetterTfExistInNewGen();
+    bool checkOptimumReached();
 
     /*Members*/
     QList<Gene> currentGen;
@@ -71,6 +72,7 @@ public:
     /*Aux Members*/
     const uint debugLevel;
     uint currentGenIndex;
+    double lowerBound;
 };
 
 
