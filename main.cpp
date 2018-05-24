@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 //    Genetic g(_populationSize, _generationsNumber, _machinesNumber, allJobs,_debugLevel);
 
     //all 10 jobs tasks
-    QList<QPair<QString,QString>> all10Jobs = getInputByDemand("U", -1, 10, -1, inputToSol);
+    QList<QPair<QString,QString>> all10Jobs = getInputByDemand("U", -1, 1000, -1, inputToSol);
 //    QList<QPair<QString,QString>> all10Jobs = getInputByNames(QStringList()<< "U_2_0010_05_3.txt", inputToSol);
 //    cout << all10Jobs; exit(0);
 //    QPair<QString,QString> p = all10Jobs.first();
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
     const uint& _populationSize(100);
     const uint& _generationsNumber(100);
     const uint& _debugLevel(0);
-    runGenetic(QList<QPair<QString,QString>>() << all10Jobs.first(),_populationSize, _generationsNumber, _debugLevel,specialGenes);
+    runGenetic(all10Jobs,_populationSize, _generationsNumber, _debugLevel,specialGenes);
 
     return 0;
 }
