@@ -77,13 +77,15 @@ int main(int argc, char *argv[])
 //    Genetic g(_populationSize, _generationsNumber, _machinesNumber, allJobs,_debugLevel);
 
     //all 10 jobs tasks
-    QList<QPair<QString,QString>> all10Jobs = getInputByDemand("U", -1, 10, -1, inputToSol);
+    QList<QPair<QString,QString>> all10Jobs = getInputByDemand("U", -1, 1000, -1, inputToSol);
+//    QList<QPair<QString,QString>> all10Jobs = getInputByNames(QStringList()<< "U_2_0010_05_3.txt", inputToSol);
+//    cout << all10Jobs; exit(0);
 //    QPair<QString,QString> p = all10Jobs.first();
 //    QList<QPair<QString,QString>> first10Jobs; first10Jobs << p; // NU_1_0010_05_0.txt
     const uint& _populationSize(100);
     const uint& _generationsNumber(100);
-    const uint& _debugLevel(2);
-    runGenetic(all10Jobs,_populationSize, _generationsNumber, _debugLevel );
+    const uint& _debugLevel(0);
+    runGenetic(all10Jobs,_populationSize, _generationsNumber, _debugLevel);
 
     return 0;
 }
@@ -210,22 +212,43 @@ void runGenetic(QList<QPair<QString,QString>> inputToSol, uint _populationSize, 
 
         cout << QString("--------------------START %1 from %2--------------------------------").arg(i+1).arg(inputToSol.size()); QTime timer; timer.start();
         QPair<QString,QString> inputToSolPair = inputToSol.at(i);
-        cout << QString("input file number %1: inputName=%2 and solutionName=%3").arg(i+1).arg(inputToSolPair.first).arg(inputToSolPair.second);
+        cout << QString("%1) %2").arg(i+1).arg(inputToSolPair.first.split("/").back());
         double tf(0); int numberOfMachines(0); double globalLower(0);
         const QList<uint> allJobs = getInputFromFile(inputToSolPair, tf, numberOfMachines, globalLower); //getting jobs from input file, printing data from files(input and sol file) and taking the upperBound as targer function(tf)
         tf-=numberOfMachines; //remove num machines
+
+        Gene bestGeneFound;
+        //attempt1
         Genetic g(_populationSize, _generationsNumber, numberOfMachines, allJobs,_debugLevel);
+        bestGeneFound = g.bestGeneFound;
+        cout << QString("Attempt %1(populationSize=%2, genSize=%3): TF=%4").arg(1).arg(_populationSize).arg(_generationsNumber).arg(g.bestGeneFound.targetFunctionValue);
+
+        //attempt2
+        Genetic g2(_populationSize/2, _generationsNumber*2, numberOfMachines, allJobs,_debugLevel);
+        if(g2.bestGeneFound.targetFunctionValue < bestGeneFound.targetFunctionValue){
+            bestGeneFound = g2.bestGeneFound;
+        }
+        cout << QString("Attempt %1(populationSize=%2, genSize=%3): TF=%4").arg(2).arg(_populationSize/2).arg(_generationsNumber*2).arg(g2.bestGeneFound.targetFunctionValue);
+
+        //attempt3
+        Genetic g3(_populationSize*2, _generationsNumber/2, numberOfMachines, allJobs,_debugLevel);
+        if(g3.bestGeneFound.targetFunctionValue < bestGeneFound.targetFunctionValue){
+            bestGeneFound = g3.bestGeneFound;
+        }
+        cout << QString("Attempt %1(populationSize=%2, genSize=%3): TF=%4").arg(3).arg(_populationSize*2).arg(_generationsNumber/2).arg(g3.bestGeneFound.targetFunctionValue);
+
+
 
         cout << QString("----Comparison for the %1 example----").arg(i);
-        cout << QString("***tf from benchmark=%1 target function from our Genetic=%2").arg(tf).arg(g.bestGeneFound.targetFunctionValue);
-        if(tf == g.bestGeneFound.targetFunctionValue){
+        cout << QString("***BenchmarkTf=%1 ourGeneticTf=%2").arg(tf).arg(bestGeneFound.targetFunctionValue);
+        if(tf == bestGeneFound.targetFunctionValue){
             good[allJobs.size()]++;
             cout << "***RESULT IS THE SAME";
         }
         else{
             bad[allJobs.size()]++;
-            std += g.bestGeneFound.targetFunctionValue - tf;
-            cout << "***Different" << g.bestGeneFound.targetFunctionValue - tf;
+            std += bestGeneFound.targetFunctionValue - tf;
+            cout << "***RESULT IS Different" << bestGeneFound.targetFunctionValue - tf;
         }
         cout << "Run time: " << (double(timer.elapsed()) / 1000) << "seconds";
         cout << QString("Correct  (size-numberCorrect):") << good; cout << QString("Mistakes(size-numberMistakes):") << bad; cout << QString("Avegare error: %1").arg(std/i);
@@ -282,7 +305,6 @@ QList<uint> parseFiles(QPair<QString,QString> inputToSol,double& tf, int& number
             }
             file.close();
 
-            cout << QString("***Data from file %1: machinesNum=%2 jobsNum=%3").arg(fileName).arg(machinesNum).arg(jobsNum);//<< "allJobs" << allJobs;
             retVal = allJobs;
 
             lineIndex = 0;
@@ -324,12 +346,14 @@ QList<uint> parseFiles(QPair<QString,QString> inputToSol,double& tf, int& number
                 }
                 lineIndex++;
             }
-            QString format("***SOLUTION Data from file %1: machinesNum=%2 jobsNum=%3 lowerBound=%4 upperBound=%5 isOptimal=%6");
-            cout << QString(format).arg(fileNameSol).arg(machinesNumSol).arg(jobsNumSol).arg(lowerBound).arg(upperBound).arg(isOptimal);
+            Q_UNUSED(jobsNumSol);
+            cout << qPrintable(QString("*Data: machinesNum=%2 jobsNum=%3 BenchMarkTf=%4").arg(machinesNum).arg(jobsNum).arg(lowerBound));//<< "allJobs" << allJobs;
+//            QString format("***SOLUTION Data from file %1: machinesNum=%2 jobsNum=%3 lowerBound=%4 upperBound=%5 isOptimal=%6");
+//            cout << QString(format).arg(fileNameSol).arg(machinesNumSol).arg(jobsNumSol).arg(lowerBound).arg(upperBound).arg(isOptimal);
             globalLowerBound = upperBound;
             tf = upperBound + machinesNumSol;
             numberOfMachines = machinesNum;
-            cout << "\tContent of machines summed" << summedMachines;
+            cout << "*Content of machines summed" << summedMachines;
 //            cout << "\tContent of machines" << machines;
             fileSol.close();
 

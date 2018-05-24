@@ -41,17 +41,19 @@ public:
     void createNextGeneration();
 
     /*Using currentGen to calculate probability to each gene*/
-    QList<QPair<Gene, float> > buildProbabilityMap();
+    QList<QPair<Gene, float> > buildProbabilityMap(const QList<Gene>& parentsPool);
 
     Gene selectGeneByFitness(const QList<QPair<Gene,float>>& genesToProb, QList<uint> percentMapping);
 
-    QList<QPair<Gene, Gene>> selectParents(const QList<QPair<Gene,float>>& genesToProb);
+    QList<QPair<Gene, Gene>> selectXOParents(const uint parentsPoolSize, const QList<QPair<Gene,float>>& genesToProb);
 
     QPair<Gene, Gene> crossOver(const Gene& g1, const Gene& g2, const uint &serialNumber);
 
-    QList<Gene> doXOandMutate(const QList<QPair<Gene, Gene>>& parents);
+    QList<Gene> doXOandMutate(const QList<QPair<Gene, Gene>>& parents, QList<Gene> mutations);
 
-    Gene mutate(const Gene& g);
+    QPair<QList<Gene>, QList<Gene>> splitMutationsParents();
+
+    Gene mutate(const Gene& g, uint serialNumber);
 
     /*Aux Function*/
 //    float calcFitness(const Gene& gene);
@@ -65,10 +67,12 @@ public:
     QList<Gene> currentGen;
     QList<Gene> nextGen;
     Gene bestGeneFound;
+    uint bestGeneFoundGenNumber;
     const uint populationSize;
     const uint generationsNumber;
     const uint numberOfMachines;
     const QList<uint> allJobs;
+    uint mutationXORatio;
     /*Aux Members*/
     const uint debugLevel;
     uint currentGenIndex;

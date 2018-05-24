@@ -17,7 +17,7 @@
 /*General defines*/
 #define INF 10000000000
 #define QT_MAX_UINT 2000000000
-#define cout qDebug() << __LINE__
+#define cout qDebug()
 
 /*BNB*/
 #define DEBUGLEVELBNB 1 //0 for nothing, 1 for minimum, 2 for all
