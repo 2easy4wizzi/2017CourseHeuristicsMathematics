@@ -4,7 +4,7 @@ uint Genetic::globalBestReplace=0;
 
 Genetic::Genetic(const uint &_populationSize, const uint &_generationsNumber, const uint &_machinesNumber, const QList<uint> &_allJobs, const uint &_debugLevel)
     :populationSize(_populationSize), bestGeneFoundGenNumber(0), generationsNumber(_generationsNumber),
-     numberOfMachines(_machinesNumber), allJobs(_allJobs),
+     numberOfMachines(_machinesNumber), allJobs(_allJobs),mutationXORatio(0.2),
      debugLevel(_debugLevel), currentGenIndex(0), lowerBound(0)
 {
     if(allJobs.isEmpty()){
@@ -37,9 +37,6 @@ void Genetic::initFirstGeneration()
 
 void Genetic::runGenetic()
 {
-
-//    bool stop(false);
-    //TODO return this
     bool stop(checkOptimumReached());
     for(uint i=0; i<generationsNumber && !stop; ++i){
         currentGenIndex = i+1;//used in toString
@@ -51,11 +48,11 @@ void Genetic::runGenetic()
 
         debugPrint(toString(),3);//prints ith+1 generation genes
 
-        stop = checkOptimumReached();//calc optimum TODO
+        stop = checkOptimumReached();
         if(i % 10 == 0){
             debugPrint(toString(), 2);
         }
-        //TODO return
+
         if(!stop){
             createNextGeneration();
         }
@@ -170,18 +167,6 @@ QList<QPair<Gene, Gene> > Genetic::selectXOParents(const uint parentsPoolSize, c
         if((g1 != g2) || (g1 == g2 && !elitizmOnceOnly.contains(g1))){
             QPair<Gene, Gene> p; p.first = g1; p.second=g2;
             parents.push_back(p);
-            //TODO delete
-//            for(QPair<Gene, float> geneProb: genesToProb) {
-//                if(geneProb.first == p.first) {
-//                    cout << geneProb.second <<  p.first.toString();
-//                    for(QPair<Gene, float> geneProb: genesToProb) {
-//                        if(geneProb.first.objectName == p.second.objectName) {
-//                            cout << geneProb.second << p.second.toString();
-//                            cout << "--";
-//                        }
-//                    }
-//                }
-//            }
         }
     }
     return parents;
@@ -208,19 +193,12 @@ QList<Gene> Genetic::doXOandMutate(const QList<QPair<Gene, Gene> > &parents, QLi
     for(const QPair<Gene, Gene>& p: parents) {
         QPair<Gene, Gene> children = crossOver(p.first, p.second, i);
         i += 2;
-        if(nextGenLocal.contains(children.first) || nextGenLocal.contains(children.second)){
-            //TODO - if converge fast add here fixed re attempts of XO
-        }
         nextGenLocal << children.first << children.second;
-//        cout << children.first.targetFunctionValue << children.second.targetFunctionValue;
     }
-//    cout << "mutations size "<< mutations.size();
     for(const Gene& g: mutations) {
         Gene mutated = mutate(g,i++);
         nextGenLocal.append(mutated);
     }
-//    currentGen = nextGenLocal;
-//    debugPrint(toString(), 3);
     return nextGenLocal;
 }
 
@@ -248,8 +226,7 @@ QPair<QList<Gene>, QList<Gene> > Genetic::splitMutationsParents()
 
 Gene Genetic::mutate(const Gene &g, uint serialNumber)
 {
-    //TODO
-    const float precent(0.2);
+    const float precent(mutationXORatio);
     QList<uint> content = g.content;
     uint amountOfBitsToChange(qFloor(content.size() * precent + 0.1));
     //Generate Indicies
@@ -384,7 +361,7 @@ bool Gene::operator !=(const Gene &b) const
     return !(this->content == b.content);
 }
 
-QString Gene::toString() const //TODO - remove jobs and content - add summed Machine conetent
+QString Gene::toString() const
 {
     QString format = QString("%1 TF=%2, #Machines=%3, content:%4, %5");//NAME, TF, #Machines, content(cromozom), content of solution(machines)
 
