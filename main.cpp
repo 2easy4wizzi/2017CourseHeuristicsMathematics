@@ -13,7 +13,7 @@ QList<QPair<QString, QString> > getAllTestsNames();
 const QList<uint> getInputFromFile(QPair<QString,QString> inputToSol, double& tf, int& numberOfMachines, double &globalLowerBound);
 QList<uint> parseFiles(QPair<QString,QString> inputToSol, double& tf, int &numberOfMachines, double &globalLowerBound);
 void runLocalSearch(QList<QPair<QString,QString>> inputToSol);
-void runGenetic(QList<QPair<QString,QString>> inputToSol, uint _populationSize, uint _generationsNumber, uint _debugLevel);
+void runGenetic(QList<QPair<QString,QString>> inputToSol, uint _populationSize, uint _generationsNumber, uint _debugLevel, bool specialGenes);
 QList<QPair<QString,QString>> getInputByDemand(QString dist, int range, int jobs, int numMachines, QList<QPair<QString, QString> > inputToSol);
 QList<QPair<QString,QString>> getInputByNames(QStringList names, QList<QPair<QString, QString>> inputToSol);
 void runBNB(QList<QPair<QString,QString>> inputToSol);
@@ -77,15 +77,16 @@ int main(int argc, char *argv[])
 //    Genetic g(_populationSize, _generationsNumber, _machinesNumber, allJobs,_debugLevel);
 
     //all 10 jobs tasks
-    QList<QPair<QString,QString>> all10Jobs = getInputByDemand("U", -1, 1000, -1, inputToSol);
+    QList<QPair<QString,QString>> all10Jobs = getInputByDemand("U", -1, 10, -1, inputToSol);
 //    QList<QPair<QString,QString>> all10Jobs = getInputByNames(QStringList()<< "U_2_0010_05_3.txt", inputToSol);
 //    cout << all10Jobs; exit(0);
 //    QPair<QString,QString> p = all10Jobs.first();
 //    QList<QPair<QString,QString>> first10Jobs; first10Jobs << p; // NU_1_0010_05_0.txt
+    bool specialGenes(true);
     const uint& _populationSize(100);
     const uint& _generationsNumber(100);
     const uint& _debugLevel(0);
-    runGenetic(all10Jobs,_populationSize, _generationsNumber, _debugLevel);
+    runGenetic(QList<QPair<QString,QString>>() << all10Jobs.first(),_populationSize, _generationsNumber, _debugLevel,specialGenes);
 
     return 0;
 }
@@ -203,7 +204,7 @@ void runLocalSearch(QList<QPair<QString,QString>> inputToSol){
     cout << QString("Total time: %1 seconds").arg((double(timerTotal.elapsed()) / 1000));
 }
 
-void runGenetic(QList<QPair<QString,QString>> inputToSol, uint _populationSize, uint _generationsNumber, uint _debugLevel){
+void runGenetic(QList<QPair<QString,QString>> inputToSol, uint _populationSize, uint _generationsNumber, uint _debugLevel, bool specialGenes){
     QMap<int,int> good;
     QMap<int,int> bad;
     double std(0);
@@ -219,23 +220,27 @@ void runGenetic(QList<QPair<QString,QString>> inputToSol, uint _populationSize, 
 
         Gene bestGeneFound;
         //attempt1
-        Genetic g(_populationSize, _generationsNumber, numberOfMachines, allJobs,_debugLevel);
+        Genetic g(_populationSize, _generationsNumber, numberOfMachines, allJobs,_debugLevel,specialGenes);
         bestGeneFound = g.bestGeneFound;
-        cout << QString("Attempt %1(populationSize=%2, genSize=%3): TF=%4").arg(1).arg(_populationSize).arg(_generationsNumber).arg(g.bestGeneFound.targetFunctionValue);
+        cout << QString("Attempt %1(populationSize=%2, genSize=%3): TF=%4; BenchMark=%5").arg(1).arg(_populationSize).arg(_generationsNumber).arg(g.bestGeneFound.targetFunctionValue).arg(tf);
 
         //attempt2
-        Genetic g2(_populationSize/2, _generationsNumber*2, numberOfMachines, allJobs,_debugLevel);
-        if(g2.bestGeneFound.targetFunctionValue < bestGeneFound.targetFunctionValue){
-            bestGeneFound = g2.bestGeneFound;
+        if(bestGeneFound.targetFunctionValue > tf){
+            Genetic g2(_populationSize/2, _generationsNumber*2, numberOfMachines, allJobs,_debugLevel,specialGenes);
+            if(g2.bestGeneFound.targetFunctionValue < bestGeneFound.targetFunctionValue){
+                bestGeneFound = g2.bestGeneFound;
+            }
+            cout << QString("Attempt %1(populationSize=%2, genSize=%3): TF=%4; BenchMark=%5").arg(2).arg(_populationSize/2).arg(_generationsNumber*2).arg(g2.bestGeneFound.targetFunctionValue).arg(tf);
         }
-        cout << QString("Attempt %1(populationSize=%2, genSize=%3): TF=%4").arg(2).arg(_populationSize/2).arg(_generationsNumber*2).arg(g2.bestGeneFound.targetFunctionValue);
 
-        //attempt3
-        Genetic g3(_populationSize*2, _generationsNumber/2, numberOfMachines, allJobs,_debugLevel);
-        if(g3.bestGeneFound.targetFunctionValue < bestGeneFound.targetFunctionValue){
-            bestGeneFound = g3.bestGeneFound;
+        if(bestGeneFound.targetFunctionValue > tf){
+            //attempt3
+            Genetic g3(_populationSize*2, _generationsNumber/2, numberOfMachines, allJobs,_debugLevel,specialGenes);
+            if(g3.bestGeneFound.targetFunctionValue < bestGeneFound.targetFunctionValue){
+                bestGeneFound = g3.bestGeneFound;
+            }
+            cout << QString("Attempt %1(populationSize=%2, genSize=%3): TF=%4; BenchMark=%5").arg(3).arg(_populationSize*2).arg(_generationsNumber/2).arg(g3.bestGeneFound.targetFunctionValue).arg(tf);
         }
-        cout << QString("Attempt %1(populationSize=%2, genSize=%3): TF=%4").arg(3).arg(_populationSize*2).arg(_generationsNumber/2).arg(g3.bestGeneFound.targetFunctionValue);
 
 
 

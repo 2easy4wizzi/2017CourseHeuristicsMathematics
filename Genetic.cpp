@@ -2,10 +2,10 @@
 
 uint Genetic::globalBestReplace=0;
 
-Genetic::Genetic(const uint &_populationSize, const uint &_generationsNumber, const uint &_machinesNumber, const QList<uint> &_allJobs, const uint &_debugLevel)
-    :populationSize(_populationSize), bestGeneFoundGenNumber(0), generationsNumber(_generationsNumber),
+Genetic::Genetic(const uint &_populationSize, const uint &_generationsNumber, const uint &_machinesNumber, const QList<uint> &_allJobs, const uint &_debugLevel, bool _specialGenes)
+    :bestGeneFoundGenNumber(0), populationSize(_populationSize),  generationsNumber(_generationsNumber),
      numberOfMachines(_machinesNumber), allJobs(_allJobs),mutationXORatio(0.2),
-     debugLevel(_debugLevel), currentGenIndex(0), lowerBound(0)
+     debugLevel(_debugLevel), currentGenIndex(0), lowerBound(0), specialGenes(_specialGenes)
 {
     if(allJobs.isEmpty()){
         debugPrint(QString("allJobs is empty - aborting Genetic H"),0);
@@ -23,8 +23,9 @@ Genetic::Genetic(const uint &_populationSize, const uint &_generationsNumber, co
 
 void Genetic::initFirstGeneration()
 {
-    int specialGenes(0);//TODO LPT, BESTFIT, SAME MACHINE GENES
-    for(uint i =0; i < populationSize - specialGenes; ++i) {
+
+    int specialGenesNumber = specialGenes? 2 : 0 ;//TODO LPT, BESTFIT, SAME MACHINE GENES
+    for(uint i =0; i < populationSize - specialGenesNumber; ++i) {
         Gene gene(allJobs, numberOfMachines, QString::number(i));
         if(gene.targetFunctionValue < bestGeneFound.targetFunctionValue){
             bestGeneFound = gene;
@@ -32,7 +33,153 @@ void Genetic::initFirstGeneration()
         }
         currentGen << gene;
     }
+    if(specialGenes){
+        createSpecialGenes();
+    }
+
+//    checkIfBetterTfExistInNewGen();
     debugPrint(QString("**Best gene from 1st generation: %1").arg(bestGeneFound.toString()),2);
+}
+
+void Genetic::createSpecialGenes()
+{
+    Gene Lpt = createLptGene();
+    Gene BestFit = createBestFitGene();
+    if(Lpt.targetFunctionValue < bestGeneFound.targetFunctionValue){
+        bestGeneFound = Lpt;
+        bestGeneFoundGenNumber = 0;
+    }
+    if(BestFit.targetFunctionValue < bestGeneFound.targetFunctionValue){
+        bestGeneFound = BestFit;
+        bestGeneFoundGenNumber = 0;
+    }
+    currentGen << Lpt << BestFit;
+}
+
+Gene Genetic::createLptGene()
+{
+    QPair<double, QList<QList<uint> > > lptFirstSol;
+    lptFirstSol.first = INF;
+
+    //for every K<10
+    int k = numberOfMachines;
+
+    QList<uint> localSummedMachines;
+    QList<QList<uint>> localMachines;
+    QList<uint> localRemainng(allJobs);
+
+    /*open emtpy machines*/
+    for(int r=0; r<k; ++r){
+        localSummedMachines.append(0);
+        localMachines.append(QList<uint>());
+    }
+
+    int jobsNumber(localRemainng.size());
+    //run on all jobs
+    for (int i = 0; i < jobsNumber; ++i) {
+        uint job (localRemainng.takeFirst());
+        uint ind2(0);
+        double localPotentialTarget(INF);
+        for (int j = 0; j < localSummedMachines.size(); ++j) {
+            //find heaviest
+            uint heaviestMachine(0);
+            for(int u = 0; u<localSummedMachines.size(); ++u){
+                uint localSummedMachinesValue = (j==u) ? localSummedMachines[u] + job : localSummedMachines[u];
+                if(localSummedMachinesValue > heaviestMachine){
+                    heaviestMachine = localSummedMachinesValue;
+                }
+            }
+            uint potentialTarget(localSummedMachines.size() + heaviestMachine);
+            if(potentialTarget < localPotentialTarget){
+                localPotentialTarget = potentialTarget;
+                ind2 = j;
+            }
+        }
+        /*Add next to job to minimal cost machine*/
+        localMachines[ind2].append(job);
+        localSummedMachines[ind2] += job;
+    }
+    uint maxSum(0);
+    for(uint summedMachine: localSummedMachines) {
+        if(summedMachine > maxSum) {
+            maxSum = summedMachine;
+        }
+    }
+    double ithTargetFunc(maxSum + localSummedMachines.size());
+
+    if(ithTargetFunc < lptFirstSol.first) {
+        lptFirstSol.first = ithTargetFunc;
+        lptFirstSol.second = localMachines;
+    }
+
+    QList<uint> content = castMachinesToContent(localMachines);
+    Gene lpt(allJobs, numberOfMachines, QString::number(populationSize-2), content);
+    return lpt;
+}
+
+Gene Genetic::createBestFitGene()
+{
+    QList<uint> allJobsCopy = allJobs;
+
+    double bestLow = lowerBound;
+
+    QPair<double, QList<QList<uint> > > sol;
+    QList<QList<uint>> machines;
+
+    for(uint i=0; i<numberOfMachines; ++i){
+        uint currentSum(0);
+        QList<uint> machine;
+        QList<int> usedJobs;
+        for(int j=0; j<allJobsCopy.size(); ++j){
+            if(currentSum+allJobsCopy.at(j) <= bestLow){
+                machine << allJobsCopy.at(j);
+                currentSum += allJobsCopy.at(j);
+                usedJobs <<j;
+            }
+        }
+        machines << machine;
+        QList<uint> newAllJob;
+        for(int k=0; k<allJobsCopy.size(); ++k){
+            if(!usedJobs.contains(k)){
+                newAllJob << allJobsCopy.at(k);
+            }
+        }
+        allJobsCopy = newAllJob;
+    }
+    while(!allJobsCopy.isEmpty()){
+        machines[0].append(allJobsCopy.takeAt(0));
+    }
+
+    QList<uint> content = castMachinesToContent(machines);
+    Gene bestFit(allJobs, numberOfMachines, QString::number(populationSize-1), content);
+
+    return bestFit;
+}
+
+QList<uint> Genetic::castMachinesToContent(QList<QList<uint> > localMachines)
+{
+    QList<uint> content;
+    for(int k=0; k<allJobs.size(); ++k){
+        content.append(0);
+    }
+    for(int k=0; k<allJobs.size(); ++k){
+        bool found = false;
+        for(int i=0; i<localMachines.size() && !found; ++i){
+            QList<uint> m = localMachines.at(i);
+            for(int j=0; j<m.size() && !found; ++j){
+                uint jobIter = m.at(j);
+                if(jobIter == allJobs.at(k)){
+                    m.takeAt(j);
+                    content[k] = i+1;
+                    found = true;
+                }
+            }
+            if(found){
+                localMachines[i] = m;
+            }
+        }
+    }
+    return content;
 }
 
 void Genetic::runGenetic()

@@ -30,10 +30,16 @@ private:
 class Genetic
 {
 public:
-    Genetic(const uint& _populationSize, const uint& _generationsNumber, const uint& _machinesNumber, const QList<uint>& _allJobs, const uint& _debugLevel);
+    Genetic(const uint& _populationSize, const uint& _generationsNumber, const uint& _machinesNumber, const QList<uint>& _allJobs, const uint& _debugLevel, bool _specialGenes);
 
     /*Create and assigns currentGeneration */
     void initFirstGeneration();
+
+    void createSpecialGenes();
+
+    Gene createLptGene();
+    Gene createBestFitGene();
+    QList<uint> castMachinesToContent(QList<QList<uint>> localMachines);
 
     void runGenetic();
 
@@ -78,6 +84,7 @@ public:
     uint currentGenIndex;
     uint lowerBound;
     static uint globalBestReplace; //TODO - TEMP var to see how much generation are effective
+    bool specialGenes;
 };
 
 
