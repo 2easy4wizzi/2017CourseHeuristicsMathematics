@@ -30,7 +30,7 @@ private:
 class Genetic
 {
 public:
-    Genetic(const uint& _populationSize, const uint& _generationsNumber, const uint& _machinesNumber, const QList<uint>& _allJobs, const uint& _debugLevel, bool _specialGenes);
+    Genetic(const uint& _populationSize, const uint& _generationsNumber, const uint& _machinesNumber, const QList<uint>& _allJobs, const uint& _debugLevel, bool _specialGenes,const float& _mutationPercentage, const float& _genesMutationPercentage, const uint& fitnessFunctionIndex);
 
     /*Create and assigns currentGeneration */
     void initFirstGeneration();
@@ -57,7 +57,7 @@ public:
 
     QList<Gene> doXOandMutate(const QList<QPair<Gene, Gene>>& parents, QList<Gene> mutations);
 
-    QPair<QList<Gene>, QList<Gene>> splitMutationsParents();
+    QPair<QList<Gene>, QList<Gene>> splitMutationsParents(QList<QPair<Gene,float>> prob, QList<uint> percentMapping);
 
     Gene mutate(const Gene& g, uint serialNumber);
 
@@ -78,7 +78,7 @@ public:
     const uint generationsNumber;
     const uint numberOfMachines;
     const QList<uint> allJobs;
-    uint mutationXORatio;
+//    uint mutationXORatio;
     /*Aux Members*/
     const uint debugLevel;
     uint currentGenIndex;
@@ -86,6 +86,9 @@ public:
     static uint globalBestReplace; //TODO - TEMP var to see how much generation are effective
     static uint globalSumMutation; //TODO - TEMP var to see how much generation are effective
     bool specialGenes;
+    uint mutationSize;
+    uint genesToMutate;
+    uint fitnessFunctionIndex;
 };
 
 

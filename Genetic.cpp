@@ -3,16 +3,18 @@
 uint Genetic::globalBestReplace=0;
 uint Genetic::globalSumMutation=0;
 
-Genetic::Genetic(const uint &_populationSize, const uint &_generationsNumber, const uint &_machinesNumber, const QList<uint> &_allJobs, const uint &_debugLevel, bool _specialGenes)
+Genetic::Genetic(const uint &_populationSize, const uint &_generationsNumber, const uint &_machinesNumber, const QList<uint> &_allJobs, const uint &_debugLevel, bool _specialGenes, const float& _mutationPercentage, const float& _genesMutationPercentage, const uint& _fitnessFunctionIndex)
     :bestGeneFoundGenNumber(0), populationSize(_populationSize),  generationsNumber(_generationsNumber),
-     numberOfMachines(_machinesNumber), allJobs(_allJobs),mutationXORatio(0.2),
-     debugLevel(_debugLevel), currentGenIndex(0), lowerBound(0), specialGenes(_specialGenes)
+     numberOfMachines(_machinesNumber), allJobs(_allJobs),
+     debugLevel(_debugLevel), currentGenIndex(0), lowerBound(0), specialGenes(_specialGenes),fitnessFunctionIndex(_fitnessFunctionIndex)
 {
     if(allJobs.isEmpty()){
         debugPrint(QString("allJobs is empty - aborting Genetic H"),0);
     }
     else{
         debugPrint(QString("starting Genetic with args: generationsNumber=%1, populationSize=%2, machinesNumber=%3").arg(generationsNumber).arg(populationSize).arg(numberOfMachines),2);
+        mutationSize = _mutationPercentage;
+        genesToMutate = qCeil(_genesMutationPercentage * populationSize);
         calcLowerBound(allJobs);
         initFirstGeneration();
         runGenetic();
@@ -206,84 +208,161 @@ void Genetic::runGenetic()
         }
     }
     currentGen = nextGen;
-    debugPrint(toString(), 2);
+    debugPrint(toString(), 1);
 
 }
 
 void Genetic::createNextGeneration()
 {
-    QPair<QList<Gene>, QList<Gene>> mutationParentSplit = splitMutationsParents();
+    QList<QPair<Gene,float>> prob = buildProbabilityMap(currentGen);
+    QList<uint> percentMapping;
+    uint precision(1000000);
+    for(int i = 0; i < prob.size(); ++i){
+        int bucketSize = prob[i].second * precision;
+        for(int j=0; j<bucketSize; ++j){
+            percentMapping.append(i);
+        }
+    }
+    QPair<QList<Gene>, QList<Gene>> mutationParentSplit = splitMutationsParents(prob, percentMapping);
 
     QList<Gene> mutations = mutationParentSplit.first;
     QList<Gene> parentsPool = mutationParentSplit.second;
 //    cout << "XX: "<< parentsPool.size() << mutations.size();
-    QList<QPair<Gene,float>> prob = buildProbabilityMap(parentsPool);
-    QList<QPair<Gene, Gene>> parents = selectXOParents(parentsPool.size() ,prob);
+    QList<QPair<Gene, Gene>> parents = selectXOParents(parentsPool.size()-mutations.size() ,prob);
     nextGen = doXOandMutate(parents, mutations);
 }
 
 QList<QPair<Gene,float>> Genetic::buildProbabilityMap(const QList<Gene> &parentsPool)
 {
     QList<QPair<Gene,float>> probabilityPairs;
-    double tfSum(0);
-    double maximalTf(0);
-    double minimalTf(INF);
 
-    for( Gene g : parentsPool){
-        if(g.targetFunctionValue < minimalTf){
-            minimalTf = g.targetFunctionValue;
+    if(fitnessFunctionIndex == 1){
+        double tfSum(0);
+        double maximalTf(0);
+
+        for( Gene g : parentsPool){
+            if(g.targetFunctionValue > maximalTf){
+                maximalTf = g.targetFunctionValue;
+            }
+            tfSum += g.targetFunctionValue;
         }
-        if(g.targetFunctionValue > maximalTf){
-            maximalTf = g.targetFunctionValue;
+        tfSum = maximalTf * parentsPool.size() - tfSum;
+
+        float totalProb(0);
+
+        for( Gene g : parentsPool){
+            float geneFitness = (maximalTf-g.targetFunctionValue)/tfSum;
+
+            QPair<Gene,float> newPair;
+            newPair.first = g;
+            if(geneFitness != geneFitness){//geneFitness is nan
+                //            cout << (geneFitness != geneFitness) << "nan happened";
+                newPair.second = 0;
+            }
+            else{
+                newPair.second = geneFitness;
+                totalProb+=geneFitness;
+            }
+            probabilityPairs << newPair;
         }
-        tfSum += g.targetFunctionValue;
-    }
-//    cout << "tfSum: " << tfSum;
-    tfSum = maximalTf * parentsPool.size() - tfSum;
-//    cout << "Normalized tfSum: " << tfSum;
-//    cout << "Maximal Tf: " << maximalTf;
 
-    float totalProb(0);
-
-    for( Gene g : parentsPool){
-        float geneFitness = (maximalTf-g.targetFunctionValue)/tfSum;
-//        cout << maximalTf << g.targetFunctionValue << tfSum;
-//        cout << maximalTf;
-//        cout << g.targetFunctionValue;
-//        exit(0);
-        QPair<Gene,float> newPair;
-        newPair.first = g;
-        if(geneFitness != geneFitness){//geneFitness is nan
-//            cout << (geneFitness != geneFitness) << "nan happened";
-            newPair.second = 0;
+        if(totalProb > 0){
+            for(int i = 0; i < probabilityPairs.size(); ++i){
+                probabilityPairs[i].second /= totalProb;
+            }
         }
         else{
-            newPair.second = geneFitness;
-            totalProb+=geneFitness;
+            for(int i = 0; i < probabilityPairs.size(); ++i){
+                probabilityPairs[i].second = 1/float(probabilityPairs.size());
+            }
         }
-        probabilityPairs << newPair;
+    }
+    else if(fitnessFunctionIndex == 2){
+        double c(3);
+        double sumAllJobs(0);
+        for(const uint& job : allJobs){sumAllJobs += job;}
+        double perfectSplit = (sumAllJobs/double(numberOfMachines));
+        double cps = c*perfectSplit;
+        double cpsDiffSum(0);
+
+
+        for( Gene g : parentsPool){
+            double geneTf = g.targetFunctionValue;
+            float geneFitness = 0;
+            if(geneTf < cps){//to have possitive percentage
+                geneFitness = cps - geneTf;
+            }
+            QPair<Gene,float> newPair; newPair.first = g; newPair.second = geneFitness;
+            probabilityPairs << newPair;
+
+            cpsDiffSum += geneFitness;
+        }
+        for( int i=0; i<probabilityPairs.size(); ++i){
+            probabilityPairs[i].second /= cpsDiffSum;
+        }
+
+
+    }
+    else if (fitnessFunctionIndex == 3){// (1/tfi)/(sigma(1/tfj)) where j runs on all tfs
+        double sum(0);
+        for( Gene g : parentsPool){
+            float geneTf = 1/g.targetFunctionValue;
+            float geneFitness = 0;
+            if(geneTf > 0){
+                geneFitness = geneTf;
+            }
+            QPair<Gene,float> newPair; newPair.first = g; newPair.second = geneFitness;
+            probabilityPairs << newPair;
+
+            sum += geneFitness;
+        }
+        for( int i=0; i<probabilityPairs.size(); ++i){
+            probabilityPairs[i].second /= sum;
+        }
+    }
+    else if (fitnessFunctionIndex == 4){// (1/sroot(tfi))/(sigma(1/sroot(tfj))) where j runs on all tfs
+        double sum(0);
+        for( Gene g : parentsPool){
+            float geneTf = 1/qSqrt(g.targetFunctionValue);
+            float geneFitness = 0;
+            if(geneTf > 0){
+                geneFitness = geneTf;
+            }
+            QPair<Gene,float> newPair; newPair.first = g; newPair.second = geneFitness;
+            probabilityPairs << newPair;
+
+            sum += geneFitness;
+        }
+        for( int i=0; i<probabilityPairs.size(); ++i){
+            probabilityPairs[i].second /= sum;
+        }
+    }
+    else{// (1/tfi^2)/(sigma(1/tfj^2)) where j runs on all tfs
+        double sum(0);
+        for( Gene g : parentsPool){
+            float geneTf = 1/qPow(g.targetFunctionValue,2);
+            float geneFitness = 0;
+            if(geneTf > 0){
+                geneFitness = geneTf;
+            }
+            QPair<Gene,float> newPair; newPair.first = g; newPair.second = geneFitness;
+            probabilityPairs << newPair;
+
+            sum += geneFitness;
+        }
+        for( int i=0; i<probabilityPairs.size(); ++i){
+            probabilityPairs[i].second /= sum;
+        }
+
     }
 
-    if(totalProb > 0){
-        for(int i = 0; i < probabilityPairs.size(); ++i){
-            probabilityPairs[i].second /= totalProb;
-        }
-    }
-    else{
-        for(int i = 0; i < probabilityPairs.size(); ++i){
-            probabilityPairs[i].second = 1/float(probabilityPairs.size());
-        }
-    }
 
-//    for(int i = 0; i < probabilityPairs.size(); ++i){
-//        cout << totalProb<<probabilityPairs[i].second;
-//    }
-//    float sum(0);
-//    for(const QPair<Gene,float>& p : probabilityPairs){
-//        cout << p.first.toString() << p.second;
-//        sum+= p.second;
-//    }
-//    cout << sum;
+    float checkProbSumTo1 =0;
+    for( int i=0; i<probabilityPairs.size(); ++i){//debug TODO delete
+        checkProbSumTo1 += probabilityPairs[i].second;
+    }
+//    cout << checkProbSumTo1;
+//    exit(0);
     return probabilityPairs;
 }
 
@@ -322,11 +401,18 @@ QList<QPair<Gene, Gene> > Genetic::selectXOParents(const uint parentsPoolSize, c
 
 QPair<Gene, Gene> Genetic::crossOver(const Gene &g1, const Gene &g2, const uint& serialNumber)
 {
-    uint index = getRandNumberG(1,g1.content.size());
+    uint index1 = getRandNumberG(1,g1.content.size());
+    uint index2 =  0;
+    do {
+        index2 = getRandNumberG(1,g1.content.size());
+    }while(index1 == index2);
     uint contentSize = g2.content.size();
 
-    QList<uint> content1 = g1.content.mid(0,index) << g2.content.mid(index, contentSize-index);
-    QList<uint> content2 = g2.content.mid(0,index) << g1.content.mid(index, contentSize-index);
+    uint maxIndex = qMax(index1, index2);
+    uint minIndex = qMin(index1, index2);
+
+    QList<uint> content1 = g1.content.mid(0,minIndex) << g2.content.mid(minIndex, maxIndex-minIndex) << g1.content.mid(maxIndex, contentSize-maxIndex);
+    QList<uint> content2 = g2.content.mid(0,minIndex) << g1.content.mid(minIndex, maxIndex-minIndex) << g2.content.mid(maxIndex, contentSize-maxIndex);
     Gene child1(allJobs, numberOfMachines, QString::number(serialNumber), content1);
     Gene child2(allJobs, numberOfMachines, QString::number(serialNumber+1), content2);
 
@@ -351,33 +437,38 @@ QList<Gene> Genetic::doXOandMutate(const QList<QPair<Gene, Gene> > &parents, QLi
     return nextGenLocal;
 }
 
-QPair<QList<Gene>, QList<Gene> > Genetic::splitMutationsParents()
+QPair<QList<Gene>, QList<Gene> > Genetic::splitMutationsParents(QList<QPair<Gene, float> > prob, QList<uint> percentMapping)
 {
     QPair<QList<Gene>, QList<Gene> > result;
     QList<Gene> mutations;
     QList<Gene> XO;
-    for(const Gene& g: currentGen) {
-        if(XO.contains(g)) {
-            mutations.append(g);
-        }
-        else {
-            XO.append(g);
-        }
+
+    for(uint i =0; i < genesToMutate; ++i) {
+        Gene g = selectGeneByFitness(prob, percentMapping);
+        mutations.append(g);
     }
     if(mutations.size() % 2 == 1) {
-        Gene g = mutations.takeFirst();
-        XO.push_back(g);
+        Gene g = selectGeneByFitness(prob, percentMapping);
+        mutations.push_back(g);
     }
+//    for(const Gene& g: currentGen) {
+//        if(XO.contains(g)) {
+//            mutations.append(g);
+//        }
+//        else {
+//            XO.append(g);
+//        }
+//    }
     result.first = mutations;
-    result.second = XO;
+    result.second = currentGen;
     return result;
 }
 
 Gene Genetic::mutate(const Gene &g, uint serialNumber)
 {
-    const float precent(mutationXORatio);
+    const float precent(mutationSize);
     QList<uint> content = g.content;
-    uint amountOfBitsToChange(qFloor(content.size() * precent + 0.1));
+    uint amountOfBitsToChange(qCeil(content.size() * precent));
     //Generate Indicies
     QList<uint> indicies;
     QList<uint> indiciesToChange;
@@ -429,6 +520,7 @@ void Genetic::debugPrint(QString str, uint priority)
 
 void Genetic::calcLowerBound(const QList<uint>& allJobs)
 {
+
     double sumAllJobs(0);
     for(const uint& job : allJobs){sumAllJobs += job;}
 
@@ -450,6 +542,8 @@ void Genetic::calcLowerBound(const QList<uint>& allJobs)
 //    lowerBound = qCeil(qMax( qMax(perfectSplit,pMax), pigeonholePrinciple ));
     lowerBound = 0;
 
+    Q_UNUSED (perfectSplit);
+    Q_UNUSED (pMax);
 //    debugPrint(QString("LowerBounds calc: perfectSplit=%1, pMax=%2, pigeonholePrinciple=%3 => lowerBound set to %4").arg(perfectSplit).arg(pMax).arg(pigeonholePrinciple).arg(lowerBound),2);
 }
 
