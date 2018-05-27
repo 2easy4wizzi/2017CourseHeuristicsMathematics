@@ -1,6 +1,7 @@
 #include "Genetic.h"
-
+//TODO - check num of mutaions - maybe do minium mutations
 uint Genetic::globalBestReplace=0;
+uint Genetic::globalSumMutation=0;
 
 Genetic::Genetic(const uint &_populationSize, const uint &_generationsNumber, const uint &_machinesNumber, const QList<uint> &_allJobs, const uint &_debugLevel, bool _specialGenes)
     :bestGeneFoundGenNumber(0), populationSize(_populationSize),  generationsNumber(_generationsNumber),
@@ -342,6 +343,7 @@ QList<Gene> Genetic::doXOandMutate(const QList<QPair<Gene, Gene> > &parents, QLi
         i += 2;
         nextGenLocal << children.first << children.second;
     }
+    globalSumMutation+=mutations.size();
     for(const Gene& g: mutations) {
         Gene mutated = mutate(g,i++);
         nextGenLocal.append(mutated);

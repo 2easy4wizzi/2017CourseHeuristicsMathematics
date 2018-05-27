@@ -77,16 +77,16 @@ int main(int argc, char *argv[])
 //    Genetic g(_populationSize, _generationsNumber, _machinesNumber, allJobs,_debugLevel);
 
     //all 10 jobs tasks
-    QList<QPair<QString,QString>> all10Jobs = getInputByDemand("U", -1, 1000, -1, inputToSol);
+    QList<QPair<QString,QString>> all10Jobs = getInputByDemand("U", -1, 10, -1, inputToSol);
 //    QList<QPair<QString,QString>> all10Jobs = getInputByNames(QStringList()<< "U_2_0010_05_3.txt", inputToSol);
 //    cout << all10Jobs; exit(0);
 //    QPair<QString,QString> p = all10Jobs.first();
 //    QList<QPair<QString,QString>> first10Jobs; first10Jobs << p; // NU_1_0010_05_0.txt
-    bool specialGenes(true);
+    bool specialGenes(false);
     const uint& _populationSize(100);
     const uint& _generationsNumber(100);
-    const uint& _debugLevel(0);
-    runGenetic(all10Jobs,_populationSize, _generationsNumber, _debugLevel,specialGenes);
+    const uint& _debugLevel(3);
+    runGenetic(QList<QPair<QString,QString>>()<<all10Jobs.first(),_populationSize, _generationsNumber, _debugLevel,specialGenes);
 
     return 0;
 }
@@ -257,6 +257,7 @@ void runGenetic(QList<QPair<QString,QString>> inputToSol, uint _populationSize, 
         }
         cout << "Run time: " << (double(timer.elapsed()) / 1000) << "seconds";
         cout << QString("Correct  (size-numberCorrect):") << good; cout << QString("Mistakes(size-numberMistakes):") << bad; cout << QString("Avegare error: %1").arg(std/i);
+        cout << QString("#mutations so far=%1").arg(Genetic::globalSumMutation);//TODO - temp - delete
         cout << QString("-----------END %1 from %2-----------------------------------------").arg(i+1).arg(inputToSol.size());
     }
     cout << QString("Correct  (size-numberCorrect):") << good;

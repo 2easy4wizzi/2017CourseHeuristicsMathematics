@@ -84,6 +84,7 @@ public:
     uint currentGenIndex;
     uint lowerBound;
     static uint globalBestReplace; //TODO - TEMP var to see how much generation are effective
+    static uint globalSumMutation; //TODO - TEMP var to see how much generation are effective
     bool specialGenes;
 };
 
