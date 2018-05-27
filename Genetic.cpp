@@ -447,9 +447,10 @@ void Genetic::calcLowerBound(const QList<uint>& allJobs)
         pigeonholePrinciple += allJobs[allJobs.size() - j - 1];
     }
 
-    lowerBound = qCeil(qMax( qMax(perfectSplit,pMax), pigeonholePrinciple ));
+//    lowerBound = qCeil(qMax( qMax(perfectSplit,pMax), pigeonholePrinciple ));
+    lowerBound = 0;
 
-    debugPrint(QString("LowerBounds calc: perfectSplit=%1, pMax=%2, pigeonholePrinciple=%3 => lowerBound set to %4").arg(perfectSplit).arg(pMax).arg(pigeonholePrinciple).arg(lowerBound),2);
+//    debugPrint(QString("LowerBounds calc: perfectSplit=%1, pMax=%2, pigeonholePrinciple=%3 => lowerBound set to %4").arg(perfectSplit).arg(pMax).arg(pigeonholePrinciple).arg(lowerBound),2);
 }
 
 void Genetic::checkIfBetterTfExistInNewGen()

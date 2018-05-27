@@ -76,12 +76,26 @@ int main(int argc, char *argv[])
 //    QList<uint> allJobs = getInput(38);
 //    Genetic g(_populationSize, _generationsNumber, _machinesNumber, allJobs,_debugLevel);
 
-    //all 10 jobs tasks
-    QList<QPair<QString,QString>> all10Jobs = getInputByDemand("U", -1, 10, -1, inputToSol);
-//    QList<QPair<QString,QString>> all10Jobs = getInputByNames(QStringList()<< "U_2_0010_05_3.txt", inputToSol);
-//    cout << all10Jobs; exit(0);
-//    QPair<QString,QString> p = all10Jobs.first();
-//    QList<QPair<QString,QString>> first10Jobs; first10Jobs << p; // NU_1_0010_05_0.txt
+//    //first 10 tasks of 1000 jobs
+//    QList<QPair<QString,QString>> allTasks1000Jobs = getInputByDemand("U", -1, 1000, -1, inputToSol);
+//    QList<QPair<QString,QString>> first10Tasks1000Jobs;
+//    for(int i=0; i<10; i++){ first10Tasks1000Jobs.push_back(allTasks1000Jobs.at(i)); }
+//    bool specialGenes(false);
+//    const uint& _populationSize(100);
+//    const uint& _generationsNumber(100);
+//    const uint& _debugLevel(3);
+//    runGenetic(first10Tasks1000Jobs,_populationSize, _generationsNumber, _debugLevel,specialGenes);
+
+//    //first 10 jobs task
+//    QList<QPair<QString,QString>> all10Jobs = getInputByDemand("U", -1, 10, -1, inputToSol);
+//    bool specialGenes(false);
+//    const uint& _populationSize(100);
+//    const uint& _generationsNumber(100);
+//    const uint& _debugLevel(3);
+//    runGenetic(QList<QPair<QString,QString>>()<<all10Jobs.first(),_populationSize, _generationsNumber, _debugLevel,specialGenes);
+
+    //first 1000 jobs task
+    QList<QPair<QString,QString>> all10Jobs = getInputByDemand("U", -1, 1000, -1, inputToSol);
     bool specialGenes(false);
     const uint& _populationSize(100);
     const uint& _generationsNumber(100);
@@ -392,7 +406,8 @@ const QList<uint> getInputFromFile(QPair<QString,QString> inputToSol, double& tf
 QList<QPair<QString,QString>> getAllTestsNames(){
 //    QMap<int,int> numberOfJobs;
     QList<QPair<QString,QString>> inputToSol;
-    QDirIterator it("../h/docs/benchMark/all", QDirIterator::Subdirectories);
+    QDirIterator it("../h/docs/benchMark/all", QDirIterator::Subdirectories); //for pc
+//    QDirIterator it("h/docs/benchMark/all", QDirIterator::Subdirectories); //for gilad laptop - if cant read folder - configure project one above h
     while (it.hasNext()) {
         QFile file(it.next());
         QFileInfo fileInfo(file.fileName());
