@@ -18,8 +18,8 @@ Genetic::Genetic(const uint &_populationSize, const uint &_generationsNumber, co
         calcLowerBound(allJobs);
         initFirstGeneration();
         runGenetic();
-        debugPrint(QString("**END On Gen=%1").arg(bestGeneFoundGenNumber),0);
-        debugPrint(QString("**Best gene found: %1").arg(bestGeneFound.toString()),0);
+        debugPrint(QString("**END On Gen=%1").arg(bestGeneFoundGenNumber),1);
+        debugPrint(QString("**Best gene found: %1").arg(bestGeneFound.toString()),1);
     }
 
 }
@@ -208,7 +208,7 @@ void Genetic::runGenetic()
         }
     }
     currentGen = nextGen;
-    debugPrint(toString(), 1);
+    debugPrint(toString(), 2);
 
 }
 

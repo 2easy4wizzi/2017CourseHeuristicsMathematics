@@ -7,13 +7,14 @@ static QMap<uint, QList<uint>> inputsMap;
 void initInputs();
 const QList<uint> getInput(int inputBatch);
 QList<uint> shuffleMyQLIST(QList<uint> &input3rand);
-uint getRandNumber(uint low, uint high );
 void runOnAllFolder();
 QList<QPair<QString, QString> > getAllTestsNames();
 const QList<uint> getInputFromFile(QPair<QString,QString> inputToSol, double& tf, int& numberOfMachines, double &globalLowerBound);
 QList<uint> parseFiles(QPair<QString,QString> inputToSol, double& tf, int &numberOfMachines, double &globalLowerBound);
 void runLocalSearch(QList<QPair<QString,QString>> inputToSol);
 void runGenetic(QList<QPair<QString,QString>> inputToSol, uint _populationSize, uint _generationsNumber, uint _debugLevel, bool specialGenes, int attempts, const float &_mutationPercentage, const float &_genesMutationPercentage, const uint &_fitnessFunctionIndex);
+void runTestingGenetic(QList<QPair<QString,QString>> inputToSol);
+void runRandomGenetic(uint numOfJobs);
 QList<QPair<QString,QString>> getInputByDemand(QString dist, int range, int jobs, int numMachines, QList<QPair<QString, QString> > inputToSol);
 QList<QPair<QString,QString>> getInputByNames(QStringList names, QList<QPair<QString, QString>> inputToSol);
 void runBNB(QList<QPair<QString,QString>> inputToSol);
@@ -105,21 +106,20 @@ int main(int argc, char *argv[])
     //first 1000 jobs task
     QList<QPair<QString,QString>> all1000Jobs = getInputByDemand("U", -1, 1000, -1, inputToSol);
     QList<QPair<QString,QString>> first1000Job = QList<QPair<QString,QString>>() << all1000Jobs.first();
-    bool specialGenes(false);
-    const uint& _populationSize(100);
-    const uint& _generationsNumber(100);
-    const uint& _debugLevel(0);
-    const uint& _attempts(1);
-    const float& _mutationPercentage(0.02);
-    const float& _genesMutationPercentage(0.02);
-//    const uint& _fitnessFunctionIndex(3);
+//    bool specialGenes(false);
+//    const uint& _populationSize(100);
+//    const uint& _generationsNumber(100);
+//    const uint& _debugLevel(0);
+//    const uint& _attempts(1);
+//    const float& _mutationPercentage(0.02);
+//    const float& _genesMutationPercentage(0.02);
+//    const uint& _fitnessFunctionIndex(1);
 //    runGenetic(first1000Job,_populationSize, _generationsNumber, _debugLevel,specialGenes,_attempts, _mutationPercentage, _genesMutationPercentage, _fitnessFunctionIndex);
-    runGenetic(first1000Job,_populationSize, _generationsNumber, _debugLevel,specialGenes,_attempts, _mutationPercentage, _genesMutationPercentage, 1);
-    runGenetic(first1000Job,_populationSize, _generationsNumber, _debugLevel,specialGenes,_attempts, _mutationPercentage, _genesMutationPercentage, 2);
-    runGenetic(first1000Job,_populationSize, _generationsNumber, _debugLevel,specialGenes,_attempts, _mutationPercentage, _genesMutationPercentage, 3);
-    runGenetic(first1000Job,_populationSize, _generationsNumber, _debugLevel,specialGenes,_attempts, _mutationPercentage, _genesMutationPercentage, 4);
-    runGenetic(first1000Job,_populationSize, _generationsNumber, _debugLevel,specialGenes,_attempts, _mutationPercentage, _genesMutationPercentage, 5);
 
+//    runTestingGenetic(first1000Job);
+    runRandomGenetic(2000);
+    runRandomGenetic(2000);
+    runRandomGenetic(3000);
 
     return 0;
 }
@@ -237,6 +237,114 @@ void runLocalSearch(QList<QPair<QString,QString>> inputToSol){
     cout << QString("Total time: %1 seconds").arg((double(timerTotal.elapsed()) / 1000));
 }
 
+void runRandomGenetic(uint numOfJobs){
+
+    QTime timerTotal; timerTotal.start();
+    QList<uint> allJobs;
+
+    for(uint i=0; i<numOfJobs; i++){
+        allJobs << getRandNumberG(1,101);
+    }
+
+    double sumAll(0);
+    for(const uint& job :allJobs) sumAll+= job;
+    const uint& numberOfMachines(5);
+
+    bool specialGenes(false);
+    const uint& _populationSize(100);
+    const uint& _generationsNumber(100);
+    const uint& _debugLevel(1);
+    const uint& attempts(3);
+    const float& mutPercent(0.05);//how much to select
+    const float& mutSize(0.05);//size of bit to change
+    QString fitnessName("diffFromU");
+    const uint& _fitnessFunctionIndex(1);
+    Gene bestGeneFound;
+
+    cout << QString("size=%1; sum=%2; avgJob=%3; perfectSplit=%4").arg(allJobs.size()).arg(sumAll).arg(qCeil(sumAll/allJobs.size())).arg(qCeil(sumAll/numberOfMachines));
+
+
+    //attempt1
+    cout << qPrintable(QString("\nAttempt 1 start"));
+    Genetic g(_populationSize, _generationsNumber, numberOfMachines, allJobs,_debugLevel,specialGenes, mutSize, mutPercent, _fitnessFunctionIndex);
+    bestGeneFound = g.bestGeneFound;
+    QString format("Attempt %1: popSize=%2; gensNum=%3; fintnessVersion=%4; mutationPercet=%5; mutationSize=%6; TF=%7; DiffFromPerfectSplit=%8\n");
+    QString msg = format.arg(1).arg(_generationsNumber).arg(_populationSize).arg(fitnessName).arg(mutPercent).arg(mutSize).arg(g.bestGeneFound.targetFunctionValue).arg(g.bestGeneFound.targetFunctionValue - qCeil(sumAll/numberOfMachines));
+    cout << qPrintable(msg);
+
+    //attempt2
+    if(attempts>=2){
+        cout << qPrintable(QString("\nAttempt 2 start"));
+        Genetic g2(_populationSize/2, _generationsNumber*2, numberOfMachines, allJobs,_debugLevel,specialGenes, mutSize, mutPercent, _fitnessFunctionIndex);
+        if(g2.bestGeneFound.targetFunctionValue < bestGeneFound.targetFunctionValue){
+            bestGeneFound = g2.bestGeneFound;
+        }
+        QString format("Attempt %1: popSize=%2; gensNum=%3; fintnessVersion=%4; mutationPercet=%5; mutationSize=%6; TF=%7; DiffFromPerfectSplit=%8\n");
+        QString msg = format.arg(2).arg(_generationsNumber/2).arg(_populationSize*2).arg(fitnessName).arg(mutPercent).arg(mutSize).arg(g2.bestGeneFound.targetFunctionValue).arg(g2.bestGeneFound.targetFunctionValue - qCeil(sumAll/numberOfMachines));;
+        cout << qPrintable(msg);
+    }
+
+    if(attempts>=3){
+        //attempt3
+        cout << qPrintable(QString("\nAttempt 3 start"));
+        Genetic g3(_populationSize*2, _generationsNumber/2, numberOfMachines, allJobs,_debugLevel,specialGenes, mutSize, mutPercent, _fitnessFunctionIndex);
+        if(g3.bestGeneFound.targetFunctionValue < bestGeneFound.targetFunctionValue){
+            bestGeneFound = g3.bestGeneFound;
+        }
+        QString format("Attempt %1: popSize=%2; gensNum=%3; fintnessVersion=%4; mutationPercet=%5; mutationSize=%6; TF=%7; DiffFromPerfectSplit=%8\n");
+        QString msg = format.arg(3).arg(_generationsNumber*2).arg(_populationSize/2).arg(fitnessName).arg(mutPercent).arg(mutSize).arg(g3.bestGeneFound.targetFunctionValue).arg(g3.bestGeneFound.targetFunctionValue - qCeil(sumAll/numberOfMachines));;
+        cout << qPrintable(msg);
+    }
+
+    cout << QString("BestGene found on all attempts:%1").arg(bestGeneFound.toString());
+    cout << QString("Total time: %1 seconds").arg((double(timerTotal.elapsed()) / 1000));
+
+}
+
+
+void runTestingGenetic(QList<QPair<QString,QString>> inputToSol){
+
+    QList<QPair<uint,uint>> popSizeToGensNum; QPair<uint,uint> p1;
+    p1.first = 100; p1.second = 100; popSizeToGensNum<<p1;
+    p1.first = 50;  p1.second = 200; popSizeToGensNum<<p1;
+    p1.first = 200; p1.second = 50;  popSizeToGensNum<<p1;
+    QStringList fitnessNames = (QStringList()<<"diffFromU" << "3ps" << "1/tf" << "1/root(tf)" << "1/tf^2");
+    QList<float> mutationPercet = (QList<float>() << 0.01 << 0.03 << 0.05 );
+    QList<float> mutationSize   = (QList<float>() << 0.01 << 0.03 << 0.05 );
+    double tf(0); int numberOfMachines(0); double globalLower(0); int count(0);
+    const QList<uint> allJobs = getInputFromFile(inputToSol.first(), tf, numberOfMachines, globalLower); tf-=numberOfMachines; //remove num machines
+
+    QString format("%1: popSize=%2; gensNum=%3; fintnessVersion=%4; mutationPercet=%5; mutationSize=%6; TF=%7; benchMarkTf-ourTf=%8");
+    uint debug(0); bool specialGenes(false);
+    QTime timerTotal; timerTotal.start();
+    Gene bestGeneFound; bestGeneFound.targetFunctionValue=INF;
+    QString bestStr;
+    for (int i = 0; i < inputToSol.size(); ++i) {
+        for(QPair<uint,uint> popSizeToGensNumPair : popSizeToGensNum){
+            for(int k=0; k<fitnessNames.size(); ++k){
+                for(float mutPercet : mutationPercet){
+                    for(float mutSize : mutationSize){
+//                        if(count <= 127) {++count; continue;}
+                        Genetic g(popSizeToGensNumPair.first, popSizeToGensNumPair.second, numberOfMachines, allJobs,debug,specialGenes, mutSize, mutPercet, k+1);
+                        double bestTf = g.bestGeneFound.targetFunctionValue; double diffFromBM = bestTf-tf;
+                        QString msg = format.arg(count++).arg(popSizeToGensNumPair.first).arg(popSizeToGensNumPair.second).arg(fitnessNames.at(k)).arg(mutPercet).arg(mutSize).arg(bestTf).arg(diffFromBM);
+                        cout << qPrintable(msg);
+                        if(bestTf < bestGeneFound.targetFunctionValue){
+                            bestGeneFound = g.bestGeneFound;
+                            bestStr = msg;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    //maybe toSring best gene
+    cout << qPrintable(QString("End:%1").arg(bestStr));
+    cout << qPrintable(QString("Total time: %1 seconds").arg((double(timerTotal.elapsed()) / 1000)));
+
+}
+
+
 void runGenetic(QList<QPair<QString,QString>> inputToSol, uint _populationSize, uint _generationsNumber, uint _debugLevel, bool specialGenes, int attempts,const float& _mutationPercentage, const float& _genesMutationPercentage, const uint& _fitnessFunctionIndex){
     QMap<int,int> good;
     QMap<int,int> bad;
@@ -299,13 +407,6 @@ void runGenetic(QList<QPair<QString,QString>> inputToSol, uint _populationSize, 
     cout << QString("Total time: %1 seconds").arg((double(timerTotal.elapsed()) / 1000));
     cout << "oldest Gen" << Genetic::globalBestReplace;
 }
-
-const uint& _populationSize(100);
-const uint& _generationsNumber(100);
-const uint& _machinesNumber(5);
-QList<uint> allJobs = getInput(38);
-const uint& _debugLevel(3);
-
 
 QList<uint> parseFiles(QPair<QString,QString> inputToSol,double& tf, int& numberOfMachines,double& globalLowerBound){
     QList<uint> retVal;
