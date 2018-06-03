@@ -4,32 +4,6 @@
 static uint nodesSeenSoFar = 0;
 static uint nodesActive = 0;
 
-BandBK2To10::BandBK2To10(QList<uint> allJobs)
-{
-    if(allJobs.isEmpty()){ cout << "input is empty"; return; }
-    QTime timer; timer.start();//time
-    nodesSeenSoFar = 0; nodesActive = 0;//memory leak
-    calculateGlobalLowerBound(allJobs);
-    bestSolutionFound.first = INF;
-    Node* root = initializeRoot(allJobs);
-    if(root != NULL){
-        runBnbRec(root, 0);
-        Node* bestSol = new Node(bestSolutionFound.second, QList<uint>());
-        bestSol->U = bestSolutionFound.first;
-        if(DEBUGLEVELBNB == 1) cout << "BEST FOUND: " << bestSol->leafToString();
-        if(DEBUGLEVELBNB == 1) cout << "nodes seen:" << nodesSeenSoFar << ". run time: " << (double(timer.elapsed()) / 1000) << "seconds";
-//        cout << "cut off histogram:";
-//        uint totalCutOffs(0);
-//        for(int i=0; i<allJobs.size(); ++i){
-//            if(cutOffHist.contains(i)){
-//                cout << qPrintable(QString("   on depth %1 there were %2 cut offs").arg(i).arg(cutOffHist[i]));
-//                totalCutOffs += cutOffHist[i];
-//            }
-//        }
-//        cout << qPrintable(QString("**there were %1 cutoffs in total").arg(totalCutOffs));
-    }
-}
-
 BandBK2To10::BandBK2To10(QList<uint> allJobs, int _numberOfMachines) : numberOfMachines(_numberOfMachines)
 {
     if(allJobs.isEmpty()){ cout << "input is empty"; return; }
@@ -205,13 +179,9 @@ void BandBK2To10::calculateGlobalLowerBound(const QList<uint> &allJobs)
     //global lower 1 - calculation
     perfectSplit = double(numberOfMachines) + double(sumAllJobs) / double(numberOfMachines);
 
-
-    //global lower 2 - add at least 1 machine
-    //Jobs are sorted
+    //global lower 2 - add at least 1 machine - Jobs are sorted
     pMax = allJobs.first() + 1;
-//    cout << allJobs.first()<< allJobs.first()+1 << pMax;
-    //global lower 3 - calculation
-    //Jobs are sorted
+    //global lower 3 - calculation //Jobs are sorted
     uint w = qCeil(double(allJobs.size()) / double(numberOfMachines));
     uint globalLower3(0);
     for (uint j = 0; j < w; ++j) {
@@ -232,9 +202,6 @@ void BandBK2To10::runBnbRec(Node *parentNode, uint depth)
     }
     for(int i=0; i < numberOfMachines; ++i){
         Node* sonI =  new Node(parentNode->machines, parentNode->jobsLeft);
-//        QList<uint> newMachine;
-//        newMachine.push_back(job);
-//        sonI->machines.push_back(newMachine);
         sonI->machines[i].push_back(job);
         calcLowerBound(sonI);
         calcUpperBoundAndCheckBest(sonI);

@@ -20,7 +20,6 @@ public:
 class BandBK2To10
 {
 public:
-    BandBK2To10(QList<uint> allJobs);
     BandBK2To10(QList<uint> allJobs, int _numberOfMachines);
     Node *initializeRoot(const QList<uint>& allJobs);
     void calcLowerBound(Node* node) const;

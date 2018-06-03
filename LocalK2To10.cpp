@@ -31,7 +31,9 @@ LocalK2To10::LocalK2To10(QList<uint> allJobs, int _numberOfMachines, QStringList
     if(!allJobs.isEmpty()){
         QPair<double, QString> winnerSol; winnerSol.first=INF;
         QTime timer; timer.start();//time
-//        globalLowerBound = getLowerBound(numberOfMachines, allJobs);
+        if(globalLowerBound <= 0){
+            globalLowerBound = getLowerBound(numberOfMachines, allJobs);
+        }
         if(DEBUGLEVELLOCAL >= 2) cout << "numberOfMachines:" << numberOfMachines << "; lower bound:" << globalLowerBound;
 
         for(QString startAlg : startingAlgs){
@@ -71,6 +73,40 @@ QPair<double, QList<QList<uint> > > LocalK2To10::initFirstSol(QList<uint> allJob
         retVal = sameMachineFirstSol;
     }
     return retVal;
+}
+
+double LocalK2To10::getLowerBound(int numberOfMachines,QList<uint> allJobs)
+{
+    Q_UNUSED(numberOfMachines);
+    Q_UNUSED(allJobs);
+    double sumAllJobs(0);
+    for(const uint& job : allJobs){
+        sumAllJobs += job;//using in global 1
+    }
+
+    //global lower 1 - calculation
+    double perfectSplit = double(qCeil(double(numberOfMachines) + double(sumAllJobs) / double(numberOfMachines)));
+
+    //global lower 2 - add at least 1 machine
+    //Jobs are sorted
+    double pMax = allJobs.first() + 1;
+
+    //global lower 3 - calculation
+    //Jobs are sorted
+
+    uint w = qCeil(double(allJobs.size()) / double(numberOfMachines));
+    uint globalLower3(0);
+    for (uint j = 0; j < w; ++j) {
+        globalLower3 += allJobs[allJobs.size() - j - 1];
+    }
+    double pigeonholePrinciple = globalLower3 + numberOfMachines;
+
+    if(DEBUGLEVELLOCAL >= 3) {
+        cout << "pMax: " << pMax;
+        cout << "perfectSplit: " << perfectSplit;
+        cout << "pigeonholePrinciple: " << pigeonholePrinciple;
+    }
+    return qMax(pigeonholePrinciple , qMax(perfectSplit, pMax));
 }
 
 QPair<double, QList<QList<uint> > > LocalK2To10::runLpt(QList<uint> allJobs, int numberOfMachines)
@@ -230,7 +266,6 @@ void LocalK2To10::printSol(const QString& name,const QPair<double, QList<QList<u
         machinesContent += ")\n ";
     }
     machinesContent = machinesContent.mid(0,machinesContent.size()-2);
-//    cout << qPrintable(QString("      machines content(number of jobs=%1):\n %2").arg(jobsNumber).arg(machinesContent));
 }
 
 QPair<double, QList<QList<uint> > > LocalK2To10::runLocalSearch(QPair<double, QList<QList<uint> > > bestGlobalSol)
@@ -309,18 +344,6 @@ QPair<double, QList<QList<uint> > > LocalK2To10::doAllSearchSteps(const QPair<do
     if(bestLocalSol != bestGlobalSol){
         return bestLocalSol;
     }
-//    //step6
-//    bestLocalSol = swap3for3(bestGlobalSol,false);
-//    if(bestLocalSol != bestGlobalSol){
-//        return bestLocalSol;
-//    }
-
-//    //step7
-//    bestLocalSol = move3jobs(bestGlobalSol,false);
-//    if(bestLocalSol != bestGlobalSol){
-//        return bestLocalSol;
-//    }
-
 
 
     return bestGlobalSol;
@@ -439,61 +462,6 @@ QPair<double, QList<QList<uint> > > LocalK2To10::move2jobs(const QPair<double, Q
             }
             machines[i][j] = jobOnHand;
             summedMachineCopy[i] += jobOnHand;
-        }
-    }
-    return bestNeighborState;
-}
-
-QPair<double, QList<QList<uint> > > LocalK2To10::move3jobs(const QPair<double, QList<QList<uint> > > bestGlobalSol, bool opt)
-{
-    if(DEBUGLEVELLOCAL >= 3) cout << qPrintable(QString(__FUNCTION__));
-    QList<QList<uint>> machines = bestGlobalSol.second;
-    QPair<double, QList<QList<uint> > > bestNeighborState(bestGlobalSol);
-
-    for(int i = 0; i < bestGlobalSol.second.size(); ++i) {
-        QList< QPair< QList<uint>, QList<uint> > > sawThisJobs;
-        for(int j = 0; j < machines[i].size(); ++j) {
-            uint jobOnHand = machines[i][j];
-            machines[i][j] = 0;
-            for(int i2 = i; i2 < bestGlobalSol.second.size(); ++i2) {
-                for(int j2 = 0; j2 < machines[i2].size(); ++j2) {
-                    uint jobOnHand2 = machines[i2][j2];
-                    machines[i2][j2] = 0;
-                    for(int i3 = i; i3 < bestGlobalSol.second.size(); ++i3) {
-                        for(int j3 = 0; j3 < machines[i3].size(); ++j3) {
-                            uint jobOnHand3 = machines[i3][j3];
-                            QList<uint> ind; ind << i; ind << i2; ind << i3;
-                            QList<uint> values; values << jobOnHand; values << jobOnHand2; values << jobOnHand3;
-                            QPair< QList<uint>, QList<uint> > sixsome;
-                            sixsome.first = values; sixsome.second = ind;
-                            if((j==j2 && i==i2) || (j==j3 && i==i3) || (j2==j3 && i2==i3)|| sawThisJobs.contains(sixsome)) continue;
-                            machines[i3][j3] = 0;
-                            sawThisJobs.append(sixsome);
-                            for(int k = 0; k < bestGlobalSol.second.size(); ++k) {
-                                machines[k].push_back(jobOnHand);
-                                for(int l = 0; l < bestGlobalSol.second.size(); ++l) {
-                                    machines[l].push_back(jobOnHand2);
-                                    for(int m = 0; m < bestGlobalSol.second.size(); ++m) {
-                                        machines[m].push_back(jobOnHand3);
-                                        double tf (targetFunction(machines));
-                                        if(tf < bestNeighborState.first){
-                                            bestNeighborState.first = tf;
-                                            bestNeighborState.second = machines;
-                                            if(!opt) return bestNeighborState;
-                                        }
-                                        machines[m].pop_back();
-                                    }
-                                    machines[l].pop_back();
-                                }
-                                machines[k].pop_back();
-                            }
-                            machines[i3][j3] = jobOnHand3;
-                        }
-                    }
-                    machines[i2][j2] = jobOnHand2;
-                }
-            }
-            machines[i][j] = jobOnHand;
         }
     }
     return bestNeighborState;
@@ -709,71 +677,6 @@ QPair<double, QList<QList<uint> > > LocalK2To10::swap2for2(const QPair<double, Q
     return bestLocalSol;
 }
 
-QPair<double, QList<QList<uint> > > LocalK2To10::swap3for3(const QPair<double, QList<QList<uint> > > bestGlobalSol, bool opt)
-{
-    if(DEBUGLEVELLOCAL >= 3) cout << qPrintable(QString(__FUNCTION__));
-    QPair<double, QList<QList<uint>>> bestLocalSol = bestGlobalSol;
-    QList<QList<uint>> machines = bestLocalSol.second;
-
-    for(int i = 0; i < machines.size(); ++i) {
-        if(machines.at(i).size() < 3) continue;
-        QList<QList<uint>> sawThisJobsSrc;
-
-        for(int j = 0; j < machines[i].size(); ++j) {
-            uint jobOnHand1 = machines[i].at(j);
-            for(int r = j+1; r < machines[i].size(); ++r) {
-                uint jobOnHand2 = machines[i][r];
-                for(int s = r+1; s < machines[i].size(); ++s) {
-                    uint jobOnHand3 = machines[i][s];
-                    QList<uint> tupleSrc = (QList<uint>() << jobOnHand1 << jobOnHand2 << jobOnHand3);
-                    if(sawThisJobsSrc.contains(tupleSrc)) continue;//no need to move job with same value from the same machine
-                    sawThisJobsSrc.append(tupleSrc);
-
-                    for(int l = i+1; l < machines.size(); ++l) {
-                        QList<QList<uint>> sawThisJobsDst;
-                        for(int k = 0; k < machines[l].size() ; ++k) {
-                            uint jobOnHand4 = machines[l].at(k);
-                            for(int v = k+1; v < machines[l].size(); ++v) {
-                                uint jobOnHand5 = machines[l][v];
-                                for(int e = v+1; e < machines[l].size(); ++e) {
-                                    uint jobOnHand6 = machines[l][e];
-                                    QList<uint> tupleDst = (QList<uint>() << jobOnHand4 << jobOnHand5 << jobOnHand6);
-                                    if(sawThisJobsDst.contains(tupleDst) || jobOnHand1+jobOnHand2+jobOnHand3 == jobOnHand4+jobOnHand5+jobOnHand6) continue;//no need to move job with same value from the same machine
-                                    sawThisJobsDst.append(tupleDst);
-
-                                    machines[i][j] = jobOnHand4;
-                                    machines[i][r] = jobOnHand5;
-                                    machines[i][s] = jobOnHand6;
-
-                                    machines[l][k] = jobOnHand1;
-                                    machines[l][v] = jobOnHand2;
-                                    machines[l][e] = jobOnHand3;
-                                    double tf ( targetFunction(machines) );
-                                    if( tf < bestLocalSol.first){
-                                        bestLocalSol.first = tf;
-                                        bestLocalSol.second = machines;
-
-                                        if(!opt) return bestLocalSol;
-                                    }
-                                    machines[i][j] = jobOnHand1;
-                                    machines[i][r] = jobOnHand2;
-                                    machines[i][s] = jobOnHand3;
-
-                                    machines[l][k] = jobOnHand4;
-                                    machines[l][v] = jobOnHand5;
-                                    machines[l][e] = jobOnHand6;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return bestLocalSol;
-}
-
-
 double LocalK2To10::targetFunction(QList<QList<uint>> machines) {
     //Number of machines k
     uint machinesNumber = machines.size();
@@ -805,41 +708,6 @@ double LocalK2To10::calcMse(QList<uint> summedMachine)
         mse += (machineSum * machineSum);
     }
     return mse;
-}
-
-double LocalK2To10::getLowerBound(int numberOfMachines,QList<uint> allJobs)
-{
-    Q_UNUSED(numberOfMachines);
-    Q_UNUSED(allJobs);
-//    double sumAllJobs(0);
-//    for(const uint& job : allJobs){
-//        sumAllJobs += job;//using in global 1
-//    }
-
-//    //global lower 1 - calculation
-//    double perfectSplit = double(qCeil(double(numberOfMachines) + double(sumAllJobs) / double(numberOfMachines)));
-
-//    //global lower 2 - add at least 1 machine
-//    //Jobs are sorted
-//    double pMax = allJobs.first() + 1;
-
-//    //global lower 3 - calculation
-//    //Jobs are sorted
-
-//    uint w = qCeil(double(allJobs.size()) / double(numberOfMachines));
-//    uint globalLower3(0);
-//    for (uint j = 0; j < w; ++j) {
-//        globalLower3 += allJobs[allJobs.size() - j - 1];
-//    }
-//    double pigeonholePrinciple = globalLower3 + numberOfMachines;
-
-//    if(DEBUGLEVELLOCAL >= 3) {
-//        cout << "pMax: " << pMax;
-//        cout << "perfectSplit: " << perfectSplit;
-//        cout << "pigeonholePrinciple: " << pigeonholePrinciple;
-//    }
-//    return qMax(pigeonholePrinciple , qMax(perfectSplit, pMax));
-    return 0;
 }
 
 QPair<double, QList<QList<uint> > > LocalK2To10::removeZerosFromSol(QPair<double, QList<QList<uint> > > bestGlobalSol)

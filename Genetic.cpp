@@ -256,7 +256,6 @@ QList<QPair<Gene,float>> Genetic::buildProbabilityMap(const QList<Gene> &parents
             QPair<Gene,float> newPair;
             newPair.first = g;
             if(geneFitness != geneFitness){//geneFitness is nan
-                //            cout << (geneFitness != geneFitness) << "nan happened";
                 newPair.second = 0;
             }
             else{
@@ -356,13 +355,6 @@ QList<QPair<Gene,float>> Genetic::buildProbabilityMap(const QList<Gene> &parents
 
     }
 
-
-    float checkProbSumTo1 =0;
-    for( int i=0; i<probabilityPairs.size(); ++i){//debug TODO delete
-        checkProbSumTo1 += probabilityPairs[i].second;
-    }
-//    cout << checkProbSumTo1;
-//    exit(0);
     return probabilityPairs;
 }
 

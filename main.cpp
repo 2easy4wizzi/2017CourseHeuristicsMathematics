@@ -117,9 +117,10 @@ int main(int argc, char *argv[])
 //    runGenetic(first1000Job,_populationSize, _generationsNumber, _debugLevel,specialGenes,_attempts, _mutationPercentage, _genesMutationPercentage, _fitnessFunctionIndex);
 
 //    runTestingGenetic(first1000Job);
-    runRandomGenetic(2000);
-    runRandomGenetic(2000);
-    runRandomGenetic(3000);
+
+//    runRandomGenetic(3500);
+    runRandomGenetic(10000);
+
 
     return 0;
 }

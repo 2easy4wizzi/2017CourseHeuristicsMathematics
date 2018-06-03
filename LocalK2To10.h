@@ -18,20 +18,18 @@ public:
 
     QPair<double, QList<QList<uint>>> move1jobsOptimal(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt = false);
     QPair<double, QList<QList<uint>>> move2jobs(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt = false);
-    QPair<double, QList<QList<uint>>> move3jobs(const QPair<double, QList<QList<uint>>> bestGlobalSol , bool opt = false);
 
     QPair<double, QList<QList<uint>>> swap1for1Optimal(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt = false);
     QPair<double, QList<QList<uint>>> swap2for1(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt = false);
     QPair<double, QList<QList<uint>>> swap2for2(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt = false);
-    QPair<double, QList<QList<uint>>> swap3for3(const QPair<double, QList<QList<uint>>> bestGlobalSol, bool opt = false);
 
 
     /*aux functions*/
     QPair<double, QList<QList<uint> > > runUsingStartAlg(QPair<double, QList<QList<uint>>> startSol);
     double targetFunction(QList<QList<uint>> machines);
     double calcMse(QList<uint> summedMachinesGlobal);
-    double getLowerBound(int numberOfMachines,QList<uint> allJobs);
     QPair<double, QList<QList<uint>>> removeZerosFromSol(QPair<double, QList<QList<uint>>> bestGlobalSol);
+    double getLowerBound(int numberOfMachines,QList<uint> allJobs);
 
     /*debug*/
     void printSol(const QString &name, const QPair<double, QList<QList<uint> > > sol);

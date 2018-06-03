@@ -78,7 +78,6 @@ public:
     const uint generationsNumber;
     const uint numberOfMachines;
     const QList<uint> allJobs;
-//    uint mutationXORatio;
     /*Aux Members*/
     const uint debugLevel;
     uint currentGenIndex;
